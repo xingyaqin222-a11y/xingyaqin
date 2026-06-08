@@ -89,9 +89,9 @@ body{font-family:var(--f);background:#dde3f0;overflow:hidden;height:100vh;width:
 .vat{text-align:center;padding:16px;font-size:13px;color:var(--b500);font-weight:600;cursor:pointer}
 
 /* List Page */
-.lsb{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--sc);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--g100)}
-.lbk{width:36px;height:36px;border-radius:10px;background:var(--g50);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--df);flex-shrink:0;border:none;font-family:inherit}
-.lbk:active{background:var(--g100);transform:scale(.92)}
+.lsb{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--sc);position:sticky;top:0;z-index:100;border-bottom:1px solid var(--g100)}
+.lbk{width:40px;height:40px;border-radius:12px;background:var(--b50);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--df);flex-shrink:0;border:none;font-family:inherit;pointer-events:auto;-webkit-tap-highlight-color:rgba(75,115,245,.2)}
+.lbk:active{background:var(--b400);transform:scale(.9)}
 .ltt{font-size:17px;font-weight:700;color:var(--g900)}
 .lctn{font-size:13px;color:var(--g400);margin-left:auto}
 .lsrch{margin:12px 16px 0}.lsw{position:relative}
@@ -150,13 +150,14 @@ body{font-family:var(--f);background:#dde3f0;overflow:hidden;height:100vh;width:
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .pl{font-size:12px;font-weight:600;color:var(--g500)}
 .ps2{font-size:13px;font-weight:700;color:var(--s600);display:flex;align-items:center;gap:4px}
-.ptk{display:flex;position:relative;margin-bottom:8px}
-.ps3{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
-.pd{width:24px;height:24px;border-radius:50%;border:2px solid var(--g200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--g400);margin-bottom:6px;transition:all var(--dm) var(--eo)}
+.ptk{display:flex;position:relative;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.ptk::-webkit-scrollbar{display:none}
+.ps3{flex:1 0 auto;min-width:48px;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.pd{width:22px;height:22px;border-radius:50%;border:2px solid var(--g200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--g400);margin-bottom:5px;transition:all var(--dm) var(--eo)}
 .pd.do{background:var(--s500);border-color:var(--s500);color:#fff}
 .pd.ac{background:var(--b500);border-color:var(--b500);color:#fff;box-shadow:0 0 0 4px var(--b100);animation:dpp 1.8s ease-in-out infinite}
 @keyframes dpp{0%,100%{box-shadow:0 0 0 4px var(--b100)}50%{box-shadow:0 0 0 8px var(--b100)}}
-.plb2{font-size:10px;font-weight:500;color:var(--g400);text-align:center}
+.plb2{font-size:9px;font-weight:500;color:var(--g400);text-align:center;white-space:nowrap}
 .plb2.ac2{color:var(--b500);font-weight:700}.plb2.do2{color:var(--s600)}
 .pcon{position:absolute;top:11px;left:0;right:0;height:2px;background:var(--g200);z-index:0}
 .pcf{height:100%;background:linear-gradient(90deg,var(--s500),var(--b400));width:55%;border-radius:2px;transition:width .8s var(--eo)}
@@ -204,19 +205,20 @@ body{font-family:var(--f);background:#dde3f0;overflow:hidden;height:100vh;width:
 .ctap:active{transform:scale(.96);box-shadow:0 2px 8px rgba(75,115,245,.25)}
 
 /* Overlay / Modal */
-.om{position:fixed;inset:0;background:rgba(26,33,64,.45);z-index:200;opacity:0;visibility:hidden;transition:all var(--dm) var(--eo);backdrop-filter:blur(4px)}
+.om{position:fixed;inset:0;background:rgba(26,33,64,.5);z-index:200;opacity:0;visibility:hidden;transition:all var(--dm) var(--eo);backdrop-filter:blur(6px)}
 .om.sh{opacity:1;visibility:visible}
-.mdl{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.85);background:var(--sc);border-radius:24px;padding:24px;z-index:201;width:calc(100%-48px);max-width:380px;opacity:0;visibility:hidden;transition:all var(--dm) var(--eb);box-shadow:0 24px 80px rgba(26,33,64,.25)}
+.mdl{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);background:var(--sc);border-radius:24px;padding:28px 24px;z-index:201;width:calc(100%-36px);max-width:420px;opacity:0;visibility:hidden;transition:all var(--dm) var(--eb);box-shadow:0 24px 80px rgba(26,33,64,.3);max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .mdl.sh{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
-.mtl{font-size:18px;font-weight:800;color:var(--g900);margin-bottom:4px}
-.mds{font-size:13px;color:var(--g500);margin-bottom:20px}
-.fg{margin-bottom:14px}
-.fl{font-size:12px;font-weight:600;color:var(--g700);margin-bottom:6px;display:block}
-.fi{width:100%;padding:12px 14px;border:1.5px solid var(--g200);border-radius:12px;font-size:14px;font-family:var(--f);color:var(--g900);background:var(--g50);outline:none;transition:border-color var(--df);box-sizing:border-box}
-.fi:focus{border-color:var(--b500);background:#fff;box-shadow:0 0 0 3px rgba(75,115,245,.08)}
-.ma{display:flex;gap:10px;margin-top:20px}
-.bcn{flex:1;padding:13px;border:1.5px solid var(--g200);border-radius:14px;font-size:14px;font-weight:600;color:var(--g500);background:#fff;cursor:pointer;font-family:var(--f)}
-.bcf{flex:1;padding:13px;border:none;border-radius:14px;font-size:14px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--b500),var(--b600));cursor:pointer;font-family:var(--f);box-shadow:0 4px 12px rgba(75,115,245,.30)}
+.mtl{font-size:20px;font-weight:800;color:var(--g900);margin-bottom:6px}
+.mds{font-size:14px;color:var(--g500);margin-bottom:24px;line-height:1.5}
+.fg{margin-bottom:18px}
+.fl{font-size:14px;font-weight:700;color:var(--g700);margin-bottom:8px;display:block;letter-spacing:.02em}
+.fi{width:100%;padding:15px 16px;border:1.5px solid var(--g200);border-radius:14px;font-size:16px;font-family:var(--f);color:var(--g900);background:#fff;outline:none;transition:all var(--df);box-sizing:border-box;height:50px}
+.fi:focus{border-color:var(--b500);box-shadow:0 0 0 4px rgba(75,115,245,.12)}
+.ma{display:flex;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--g100)}
+.bcn{flex:1;padding:15px;border:1.5px solid var(--g200);border-radius:14px;font-size:16px;font-weight:700;color:var(--g500);background:#fff;cursor:pointer;font-family:var(--f);height:50px}
+.bcn:active{background:var(--g50)}
+.bcf{flex:1.3;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--b500),var(--b600));cursor:pointer;font-family:var(--f);box-shadow:0 6px 20px rgba(75,115,245,.35);height:50px}
 
 /* Bottom Sheet */
 .bs{position:fixed;left:0;right:0;bottom:0;z-index:202;background:var(--sc);border-radius:24px 24px 0 0;padding:20px 20px 34px;transform:translateY(120%);transition:transform .38s var(--eo);box-shadow:0 -8px 40px rgba(26,33,64,.15)}
@@ -247,9 +249,6 @@ body{font-family:var(--f);background:#dde3f0;overflow:hidden;height:100vh;width:
 
 <!-- ==================== HOME PAGE ==================== -->
 <div class="pv" id="pH">
-<!-- status bar -->
-<div class="sb"><span class="stt" id="clk">--:--</span><div style="display:flex;gap:16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2140" stroke-width="2" stroke-linecap="round"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2140" stroke-width="2"><rect x="2" y="7" width="20" height="11" rx="2"/><path d="M22 11v3" stroke-linecap="round"/><rect x="4" y="9" width="10" height="7" rx="1" fill="#1a2140"/></svg></div></div>
-
 <!-- top bar -->
 <div class="tb"><div class="tbr"><div><div class="sn">王凯的门店 <span class="stg">三翼鸟全案</span></div><div class="tg2" id="grt">今天是个好日子，加油！💪</div></div><div style="position:relative" onclick="showToast('个人中心开发中')"><div class="av">王</div><span style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:#10b981;border-radius:50%;border:2px solid #fff"></span></div></div></div>
 
@@ -296,7 +295,6 @@ body{font-family:var(--f);background:#dde3f0;overflow:hidden;height:100vh;width:
 
 <!-- ==================== DETAIL PAGE ==================== -->
 <div class="pv hr" id="pD">
-<div class="sb" style="background:var(--b600)"><span class="stt" style="color:#fff" id="clkD">--:--</span><div style="display:flex;gap:16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="7" width="20" height="11" rx="2"/><path d="M22 11v3" stroke-linecap="round"/><rect x="4" y="9" width="10" height="7" rx="1" fill="#fff"/></svg></div></div>
 <div class="dh">
 <div class="hn"><div class="hnb" onclick="goBack()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></div><span class="ht">用户信息</span><div class="hnb" onclick="showToast('更多操作')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5" fill="#fff"/><circle cx="12" cy="12" r="1.5" fill="#fff"/><circle cx="12" cy="19" r="1.5" fill="#fff"/></svg></div></div>
 <div class="hp"><div class="hav" id="haV">王</div><div class="hif"><div class="hnm" id="hnV">—</div><div class="hp2" id="hpV">—</div><div class="htg" id="htgV"></div></div><button class="cbtn" onclick="makeCall()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.28a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> 拨打</button></div></div>
@@ -359,14 +357,14 @@ body{font-family:var(--f);background:#dde3f0;overflow:hidden;height:100vh;width:
 
 // ---- Data ----
 var users = [
-  {id:1,name:'张伟',phone:'138****6210',community:'阳光花园',tags:['冰箱','洗衣机'],status:'follow',stage:2,overdue:true,amount:'￥32,800',lastFollow:'3天前',nextFollow:'2026-06-05',note:'意向较强，关注冰箱节能'},
-  {id:2,name:'李娜',phone:'139****8847',community:'翠苑小区',tags:['空调','全屋净水'],status:'done',stage:4,overdue:false,amount:'￥58,600',lastFollow:'1天前',nextFollow:'',note:'已签约全屋方案'},
-  {id:3,name:'王芳',phone:'137****3321',community:'绿城百合',tags:['定制衣柜'],status:'follow',stage:3,overdue:true,amount:'￥25,000',lastFollow:'7天前',nextFollow:'2026-06-01',note:'需上门量尺，预算待确认'},
-  {id:4,name:'赵强',phone:'136****5598',community:'万达广场',tags:['电视','音响'],status:'follow',stage:1,overdue:false,amount:'￥18,900',lastFollow:'今天',nextFollow:'2026-06-10',note:'对比竞品中，价格敏感'},
-  {id:5,name:'陈静',phone:'158****7723',community:'滨江一号',tags:['洗碗机','烤箱'],status:'overdue',stage:1,overdue:true,amount:'￥15,200',lastFollow:'12天前',nextFollow:'2026-05-28',note:'多次未接通，需换时间联系'},
-  {id:6,name:'刘洋',phone:'159****1156',community:'龙湖春江',tags:['中央空调'],status:'follow',stage:3,overdue:false,amount:'￥42,000',lastFollow:'2天前',nextFollow:'2026-06-12',note:'技术参数确认中'},
-  {id:7,name:'孙丽',phone:'135****9945',community:'保利西子',tags:['冰箱','空调','洗烘'],status:'done',stage:4,overdue:false,amount:'￥76,500',lastFollow:'5天前',nextFollow:'',note:'VIP客户，已转交安装团队'},
-  {id:8,name:'周明',phone:'188****2234',community:'万科金域',tags:['智能锁','安防'],status:'follow',stage:2,overdue:true,amount:'￥8,600',lastFollow:'5天前',nextFollow:'2026-06-04',note:'对智能家居感兴趣'}
+  {id:1,name:'张伟',phone:'138****6210',community:'阳光花园',tags:['冰箱','洗衣机'],status:'follow',stage:2,overdue:true,amount:'￥32,800',lastFollow:'3天前',nextFollow:'2026-06-05',note:'意向较强，已出方案报价'},
+  {id:2,name:'李娜',phone:'139****8847',community:'翠苑小区',tags:['空调','全屋净水'],status:'done',stage:5,overdue:false,amount:'￥58,600',lastFollow:'1天前',nextFollow:'',note:'已签约全屋方案'},
+  {id:3,name:'王芳',phone:'137****3321',community:'绿城百合',tags:['定制衣柜'],status:'follow',stage:3,overdue:true,amount:'￥25,000',lastFollow:'7天前',nextFollow:'2026-06-01',note:'订单已下，等待发货'},
+  {id:4,name:'赵强',phone:'136****5598',community:'万达广场',tags:['电视','音响'],status:'follow',stage:1,overdue:false,amount:'￥18,900',lastFollow:'今天',nextFollow:'2026-06-10',note:'初次沟通，对比竞品中'},
+  {id:5,name:'陈静',phone:'158****7723',community:'滨江一号',tags:['洗碗机','烤箱'],status:'overdue',stage:0,overdue:true,amount:'￥15,200',lastFollow:'12天前',nextFollow:'2026-05-28',note:'待分派负责人跟进'},
+  {id:6,name:'刘洋',phone:'159****1156',community:'龙湖春江',tags:['中央空调'],status:'follow',stage:3,overdue:false,amount:'￥42,000',lastFollow:'2天前',nextFollow:'2026-06-12',note:'技术参数确认中，准备下单'},
+  {id:7,name:'孙丽',phone:'135****9945',community:'保利西子',tags:['冰箱','空调','洗烘'],status:'done',stage:5,overdue:false,amount:'￥76,500',lastFollow:'5天前',nextFollow:'',note:'VIP客户，已完成交付安装'},
+  {id:8,name:'周明',phone:'188****2234',community:'万科金域',tags:['智能锁','安防'],status:'follow',stage:2,overdue:true,amount:'￥8,600',lastFollow:'5天前',nextFollow:'2026-06-04',note:'设计方案进行中'}
 ];
 
 var followRecords = {
@@ -387,26 +385,15 @@ var followRecords = {
   8:[{type:'call',content:'初步了解智能家居需求',time:'06-03 10:15',agent:'王凯'}]
 };
 
-var stageNames = ['初次接触','需求确认','方案报价','谈判签约'];
+var stageNames = ['待分派','沟通中','设计报价','订单物流','交付安装','完成/流失'];
 var curPage='pH',fromPage='pH',curUser=null,curFilter='all',searchQ='';
 var followTypes=['电话沟通','上门拜访','微信跟进','短信提醒'];
 
 // ---- Init ----
 function initApp(){
-  updateClock();
-  setInterval(updateClock,30000);
   renderCalendar();
   renderHomeCards();
   setGreeting();
-}
-
-function updateClock(){
-  var d=new Date(),h=d.getHours(),m=d.getMinutes();
-  var s=h+':'+(m<10?'0':'')+m;
-  var el=document.getElementById('clk');
-  if(el)el.textContent=s;
-  var el2=document.getElementById('clkD');
-  if(el2)el2.textContent=s;
 }
 
 function setGreeting(){
@@ -496,16 +483,10 @@ function goListPage(filterType){
 
 function backToListHome(){
   closeAllOverlays();
-  if(fromPage==='pH'){
-    goBackToHome();
-  }else{
-    goBack();
-  }
-}
-
-function goBackToHome(){
+  // always go home from list page (list page is only entered from home)
   document.getElementById('pL').className='pv hl';
   curPage='pH';
+  fromPage='pH';
 }
 
 function goDetailFromHome(uid){
@@ -653,8 +634,8 @@ function renderDetailPage(uid){
   var ptkEl=document.getElementById('ptk');
   var pstEl=document.getElementById('pst');
   
-  var stageNamesShort=['初触','需求','报价','签约'];
-  var pctVal=Math.max(0,Math.min((u.stage)/3*100,100));
+  var stageNamesShort=['待分','沟通','报价','物流','安装','完成'];
+  var pctVal=Math.max(0,Math.min((u.stage)/5*100,100));
   pcfEl.style.width=pctVal+'%';
   pstEl.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> 第'+(u.stage+1)+'阶段 · '+stageNames[u.stage];
   
@@ -663,7 +644,9 @@ function renderDetailPage(uid){
     var cls='';
     if(si<u.stage)cls=' do';
     else if(si===u.stage)cls=' ac';
-    tkHtml+='<div class="ps3"><div class="pd'+cls+'">'+(si<u.stage?'✓':si+1)+'</div><div class="plb2'+(si===u.stage?' ac2':'')+(si<u.stage?' do2':'')+'">'+stageNamesShort[si]+'</div></div>';
+    // special: last stage done = green check, last stage lost = red X
+    var iconChar=(si<u.stage?'✓':si+1);
+    tkHtml+='<div class="ps3"><div class="pd'+cls+'">'+iconChar+'</div><div class="plb2'+(si===u.stage?' ac2':'')+(si<u.stage?' do2':'')+'">'+stageNamesShort[si]+'</div></div>';
   }
   ptkEl.innerHTML=tkHtml;
   
