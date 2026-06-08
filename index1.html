@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="吃什么">
+<title>今晚吃什么</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFBF5;
+    --surface: #FFF8EE;
+    --border: #E8DDD0;
+    --text: #2C1810;
+    --text2: #8B6F5E;
+    --text3: #B8A090;
+    --accent: #D4541A;
+    --accent-light: #FFF0E8;
+    --accent-border: #F0A070;
+    --green: #2E7D52;
+    --green-light: #EAF5EE;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .header-title {
+    font-family: 'Ma Shan Zheng', cursive;
+    font-size: 28px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .header-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .dish-count-badge {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 16px 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 0;
+    font-size: 14px;
+    font-family: 'Noto Sans SC', sans-serif;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all .2s;
+    margin-bottom: -1px;
+  }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .panel { display: none; padding: 20px; }
+  .panel.active { display: block; }
+
+  /* ── 抽取页 ── */
+  .spin-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .count-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .count-hint { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+
+  .count-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .count-btn:active { background: var(--border); }
+
+  .count-num { font-size: 28px; font-weight: 500; min-width: 32px; }
+
+  .big-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 17px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    letter-spacing: .5px;
+  }
+  .big-btn:active { opacity: .85; transform: scale(.98); }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .result-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 12px;
+    text-align: center;
+    animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
+  }
+
+  .result-card.main {
+    border-color: var(--accent-border);
+    background: var(--accent-light);
+    grid-column: 1 / -1;
+  }
+
+  .result-card .r-name { font-size: 17px; font-weight: 500; color: var(--text); }
+  .result-card.main .r-name { font-size: 20px; color: var(--accent); }
+  .result-card .r-cat { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .result-card.main .r-label {
+    font-size: 11px; color: var(--accent); margin-bottom: 6px; font-weight: 500;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(.8) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .respin-btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-size: 14px;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .respin-btn:active { background: var(--surface); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text3);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  /* ── 管理页 ── */
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .add-row input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    font-size: 15px;
+    font-family: 'Noto Sans SC', sans-serif;
+    color: var(--text);
+    outline: none;
+  }
+  .add-row input:focus { border-color: var(--accent-border); }
+
+  .add-btn {
+    padding: 11px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .add-btn:active { opacity: .85; }
+
+  .cat-select {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .cat-pill {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text2);
+    font-size: 13px;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .cat-pill.active {
+    background: var(--accent-light);
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
+
+  .dish-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .dish-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .dish-item-name { flex: 1; font-size: 15px; color: var(--text); }
+  .dish-item-cat {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--surface);
+    color: var(--text3);
+  }
+
+  .del-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .del-btn:active { background: #fee2e2; color: #dc2626; }
+
+  /* ── 统计页 ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .stat-box .num { font-size: 26px; font-weight: 500; color: var(--accent); }
+  .stat-box .lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .cat-section { margin-bottom: 12px; }
+  .cat-section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 8px;
+    padding: 0 2px;
+  }
+
+  .dish-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .dish-tag {
+    font-size: 13px;
+    padding: 5px 11px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .dish-tag .drawn { color: var(--accent); font-size: 11px; margin-left: 3px; }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(44,24,16,.88);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">今晚吃什么</div>
+    <div class="header-sub">随机抽取，告别选择困难</div>
+  </div>
+  <div class="dish-count-badge" id="badge">共 0 道菜</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('spin',this)">随机抽取</button>
+  <button class="tab" onclick="switchTab('manage',this)">管理菜品</button>
+  <button class="tab" onclick="switchTab('stats',this)">统计</button>
+</div>
+
+<div id="panel-spin" class="panel active">
+  <div class="spin-card">
+    <div class="count-hint">今天想抽几道菜？</div>
+    <div class="count-area">
+      <button class="count-btn" onclick="changeCount(-1)">−</button>
+      <span class="count-num" id="count-num">3</span>
+      <button class="count-btn" onclick="changeCount(1)">+</button>
+    </div>
+    <button class="big-btn" onclick="spin()">帮我决定！</button>
+  </div>
+  <div id="results-area"></div>
+</div>
+
+<div id="panel-manage" class="panel">
+  <div class="add-row">
+    <input type="text" id="new-dish" placeholder="输入菜名，如：红烧肉" maxlength="20"
+      onkeydown="if(event.key==='Enter'){addDish();this.blur()}">
+    <button class="add-btn" onclick="addDish()">添加</button>
+  </div>
+  <div class="cat-select" id="cat-filter"></div>
+  <div class="dish-list" id="dish-list"></div>
+</div>
+
+<div id="panel-stats" class="panel">
+  <div class="stats-grid">
+    <div class="stat-box"><div class="num" id="s-total">0</div><div class="lbl">菜品总数</div></div>
+    <div class="stat-box"><div class="num" id="s-drawn">0</div><div class="lbl">已抽次数</div></div>
+    <div class="stat-box"><div class="num" id="s-cats">0</div><div class="lbl">分类数</div></div>
+  </div>
+  <div id="cat-breakdown"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS = ['全部','荤菜','素菜','汤','主食','其他'];
+const DEFAULT_DISHES = [
+  {id:1,name:'牛肉饺子',cat:'主食',drawn:0},
+  {id:2,name:'西红柿蛋汤',cat:'汤',drawn:0},
+  {id:3,name:'红烧肉',cat:'荤菜',drawn:0},
+  {id:4,name:'清炒土豆丝',cat:'素菜',drawn:0},
+  {id:5,name:'糖醋排骨',cat:'荤菜',drawn:0},
+  {id:6,name:'蒜蓉西兰花',cat:'素菜',drawn:0},
+  {id:7,name:'番茄炒鸡蛋',cat:'素菜',drawn:0},
+  {id:8,name:'白米饭',cat:'主食',drawn:0},
+  {id:9,name:'麻婆豆腐',cat:'素菜',drawn:0},
+  {id:10,name:'鱼香肉丝',cat:'荤菜',drawn:0},
+];
+
+function load(){
+  try {
+    const raw = localStorage.getItem('chishenme_dishes');
+    return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_DISHES));
+  } catch(e){ return JSON.parse(JSON.stringify(DEFAULT_DISHES)); }
+}
+function save(){ localStorage.setItem('chishenme_dishes', JSON.stringify(dishes)); }
+function loadMeta(){
+  try { return JSON.parse(localStorage.getItem('chishenme_meta')||'{"totalDrawn":0,"nextId":11}'); }
+  catch(e){ return {totalDrawn:0,nextId:11}; }
+}
+function saveMeta(){ localStorage.setItem('chishenme_meta', JSON.stringify({totalDrawn,nextId})); }
+
+let dishes = load();
+let {totalDrawn, nextId} = loadMeta();
+let count = 3;
+let activeCat = '全部';
+
+function guessCat(name){
+  if(/汤|羹|粥/.test(name)) return '汤';
+  if(/饭|面|饺|包|粉|馒|饼|窝头/.test(name)) return '主食';
+  if(/牛|猪|鸡|鸭|鱼|虾|蛋|肉|排|腿|翅|培根|火腿|羊|蟹/.test(name)) return '荤菜';
+  if(/菜|豆|瓜|笋|藕|蘑|木耳|花椰|西兰|萝卜|土豆|茄/.test(name)) return '素菜';
+  return '其他';
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+function updateBadge(){
+  document.getElementById('badge').textContent = `共 ${dishes.length} 道菜`;
+}
+
+function switchTab(id, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+  if(id==='manage') renderList();
+  if(id==='stats') renderStats();
+}
+
+function changeCount(d){
+  count = Math.max(1, Math.min(Math.max(dishes.length,1), count+d));
+  document.getElementById('count-num').textContent = count;
+}
+
+function spin(){
+  if(!dishes.length){
+    document.getElementById('results-area').innerHTML =
+      '<div class="empty-state">还没有菜品<br>请先去「管理菜品」添加几道菜吧</div>';
+    return;
+  }
+  const n = Math.min(count, dishes.length);
+  const picked = [...dishes].sort(()=>Math.random()-.5).slice(0,n);
+  picked.forEach(d=>{ const found=dishes.find(x=>x.id===d.id); if(found) found.drawn++; });
+  totalDrawn++;
+  save(); saveMeta();
+
+  let html = '<div class="results-grid">';
+  picked.forEach((d,i)=>{
+    if(i===0){
+      html += `<div class="result-card main" style="animation-delay:0s">
+        <div class="r-label">今晚主菜推荐</div>
+        <div class="r-name">${d.name}</div>
+        <div class="r-cat">${d.cat}</div>
+      </div>`;
+    } else {
+      html += `<div class="result-card" style="animation-delay:${i*0.07}s">
+        <div class="r-name">${d.name}</div>
+        <div class="r-cat">${d.cat}</div>
+      </div>`;
+    }
+  });
+  html += '</div>';
+  html += `<button class="respin-btn" onclick="spin()">不满意，再抽一次</button>`;
+  document.getElementById('results-area').innerHTML = html;
+}
+
+function addDish(){
+  const inp = document.getElementById('new-dish');
+  const name = inp.value.trim();
+  if(!name){ showToast('请输入菜品名称'); return; }
+  if(dishes.find(d=>d.name===name)){ showToast('这道菜已经有啦'); inp.value=''; return; }
+  const cat = activeCat==='全部' ? guessCat(name) : activeCat;
+  dishes.push({id:nextId++, name, cat, drawn:0});
+  save(); saveMeta(); updateBadge();
+  inp.value='';
+  showToast(`"${name}" 已添加`);
+  renderList();
+  changeCount(0);
+}
+
+function deleteDish(id, name){
+  dishes = dishes.filter(d=>d.id!==id);
+  save(); updateBadge();
+  showToast(`"${name}" 已删除`);
+  renderList();
+  changeCount(0);
+}
+
+function selectCat(cat){
+  activeCat = cat;
+  renderCatFilter();
+  renderList();
+}
+
+function renderCatFilter(){
+  const el = document.getElementById('cat-filter');
+  el.innerHTML = CATS.map(c=>`
+    <button class="cat-pill${activeCat===c?' active':''}" onclick="selectCat('${c}')">${c}</button>
+  `).join('');
+}
+
+function renderList(){
+  renderCatFilter();
+  const filtered = activeCat==='全部' ? dishes : dishes.filter(d=>d.cat===activeCat);
+  const el = document.getElementById('dish-list');
+  if(!filtered.length){
+    el.innerHTML = '<div class="empty-state" style="padding:24px 0">该分类暂无菜品</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(d=>`
+    <div class="dish-item">
+      <span class="dish-item-name">${d.name}</span>
+      <span class="dish-item-cat">${d.cat}</span>
+      <button class="del-btn" onclick="deleteDish(${d.id},'${d.name}')" aria-label="删除">×</button>
+    </div>
+  `).join('');
+}
+
+function renderStats(){
+  document.getElementById('s-total').textContent = dishes.length;
+  document.getElementById('s-drawn').textContent = totalDrawn;
+  const usedCats = [...new Set(dishes.map(d=>d.cat))];
+  document.getElementById('s-cats').textContent = usedCats.length;
+  const bd = document.getElementById('cat-breakdown');
+  bd.innerHTML = CATS.slice(1).map(cat=>{
+    const items = dishes.filter(d=>d.cat===cat);
+    if(!items.length) return '';
+    return `<div class="cat-section">
+      <div class="cat-section-title">${cat}（${items.length} 道）</div>
+      <div class="dish-tags">${items.map(d=>`
+        <span class="dish-tag">${d.name}${d.drawn?`<span class="drawn">×${d.drawn}</span>`:''}</span>
+      `).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+updateBadge();
+renderList();
+</script>
+</body>
+</html>
