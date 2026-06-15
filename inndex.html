@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>CRM Vibe Coding</title>
+<style>
+:root{--b50:#f0f4ff;--b100:#e0eaff;--b400:#6b92f7;--b500:#4B73F5;--b600:#3556e0;--g0:#fff;--g50:#f6f8fc;--g100:#eef1f8;--g200:#dde3f0;--g300:#c4cce0;--g400:#9aa4bd;--g500:#6e7a94;--g700:#3b4564;--g900:#1a2140;--s50:#edfaf4;--s500:#10b981;--s600:#059669;--w50:#fffbeb;--w500:#f59e0b;--w600:#d97706;--d50:#fff1f0;--d500:#ef4444;--d600:#dc2626;--i50:#eff6ff;--sp:#f0f3fa;--sc:#fff;--f:-apple-system,"PingFang SC","Noto Sans SC",sans-serif;--eo:cubic-bezier(.16,1,.3,1);--eb:cubic-bezier(.34,1.56,.64,1);--df:160ms;--dm:260ms}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--f);background:#dde3f0;overflow:hidden;height:100vh;width:100vw}
+#app{width:100%;height:100%;position:relative;overflow:hidden;background:var(--sp);max-width:480px;margin:0 auto;box-shadow:0 8px 40px rgba(26,33,64,.15)}
+.pv{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;transition:transform .45s var(--eo),opacity .35s var(--eo),filter .35s var(--eo);will-change:transform,opacity;background:var(--sp)}
+.pv.hl{transform:translateX(-110%);opacity:.2;filter:brightness(.7)}
+.pv.hr{transform:translateX(110%);opacity:.2;filter:brightness(.7)}
+
+/* Status Bar */
+.sb{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 10px;background:var(--sc);position:sticky;top:0;z-index:50}
+.stt{font-size:15px;font-weight:700;color:var(--g900)}
+
+/* Top Bar */
+.tb{background:var(--sc);padding:12px 16px 14px;border-bottom:1px solid var(--g100)}
+.tbr{display:flex;align-items:center;justify-content:space-between}
+.sn{font-size:17px;font-weight:700;color:var(--g900)}
+.stg{font-size:11px;font-weight:600;background:var(--b100);color:var(--b600);padding:2px 8px;border-radius:20px}
+.av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--b400),var(--b600));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.tg2{font-size:13px;color:var(--g500);margin-top:4px}
+
+/* Stat Cards */
+.ss{padding:14px 16px 0}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc{background:var(--sc);border-radius:16px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:transform var(--df) var(--eo)}
+.sc:active{transform:scale(.96)}
+.sc::before{content:'';position:absolute;top:-16px;right:-16px;width:64px;height:64px;border-radius:50%;opacity:.08}
+.sc.cb::before{background:var(--b500)}.sc.cg::before{background:var(--s500)}
+.sc.ca::before{background:var(--w500)}.sc.cd::before{background:var(--d500)}
+.sl{font-size:12px;color:var(--g500);font-weight:500;margin-bottom:6px}
+.sv{font-size:28px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.sc.cb .sv{color:var(--b500)}.sc.cg .sv{color:var(--s600)}
+.sc.ca .sv{color:var(--w600)}.sc.cd .sv{color:var(--d500)}
+.sttr{display:flex;align-items:center;gap:3px;margin-top:6px;font-size:11px;color:var(--g400)}
+.tu{color:var(--s500)}.tdu{color:var(--d500)}
+
+/* Alert */
+.al{margin:12px 16px 0;background:var(--d50);border:1px solid #fecaca;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;animation:ap 2.5s ease-in-out infinite}
+.al:active{transform:scale(.97)}
+@keyframes ap{0%,100%{border-color:#fecaca}50%{border-color:#fca5a5}}
+.aii{width:20px;height:20px;background:var(--d500);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#fff;font-weight:700}
+.att{font-size:12px;color:var(--d600);flex:1}
+.aaa{font-size:12px;font-weight:600;color:var(--d600);white-space:nowrap}
+
+/* Quick Actions */
+.sec{padding:18px 16px 0}
+.sti{font-size:13px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ab{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 8px;background:var(--sc);border-radius:16px;cursor:pointer;transition:transform var(--df) var(--eo)}
+.ab:active{transform:scale(.92)}
+.aic{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.aic.bl{background:var(--b50)}.aic.gr{background:var(--s50)}.aic.am{background:var(--w50)}.aic.pr{background:#f3f0ff}
+.alb{font-size:11px;font-weight:600;color:var(--g700);text-align:center}
+
+/* Section Header Row */
+.shr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sa{font-size:12px;color:var(--b500);font-weight:600;cursor:pointer}
+
+/* Date Tabs */
+.dts{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;margin-bottom:14px}
+.dts::-webkit-scrollbar{display:none}
+.dt{display:flex;flex-direction:column;align-items:center;padding:8px 11px;border-radius:12px;cursor:pointer;min-width:46px;transition:all var(--dm) var(--eo);flex-shrink:0}
+.dt.on{background:var(--b500);transform:scale(1.04)}
+.dt.on .dnm,.dt.on .dnu{color:#fff}
+.dnm{font-size:10px;color:var(--g400);font-weight:500}
+.dnu{font-size:18px;font-weight:700;color:var(--g700);line-height:1.1}
+.ddot{width:4px;height:4px;border-radius:50%;background:var(--b400);margin-top:3px}
+
+/* Home Customer Cards */
+.cc{background:var(--sc);border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all var(--df) var(--eo);border-left:3px solid transparent}
+.cc:active{transform:scale(.985);background:var(--g50)}
+.cc.od{border-left-color:var(--d500)}.cc.ac{border-left-color:var(--s500)}
+.cr1{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cn{font-size:16px;font-weight:700;color:var(--g900)}
+.cp{font-size:13px;color:var(--g400);margin-left:8px}
+.sbg{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px}
+.bo{background:#fff7ed;color:#c2410c}.bgr{background:var(--s50);color:var(--s600)}
+.cgs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.cg{font-size:11px;padding:2px 8px;background:var(--b50);color:var(--b600);border-radius:6px;font-weight:500}
+.cm{display:flex;align-items:center;justify-content:space-between}
+.ci{display:flex;gap:12px;font-size:12px;color:var(--g400)}
+.obb{font-size:11px;color:var(--d500);font-weight:600;display:flex;align-items:center;gap:3px}
+.vat{text-align:center;padding:16px;font-size:13px;color:var(--b500);font-weight:600;cursor:pointer}
+
+/* List Page */
+.lsb{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--sc);position:sticky;top:0;z-index:100;border-bottom:1px solid var(--g100)}
+.lbk{width:40px;height:40px;border-radius:12px;background:var(--b50);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--df);flex-shrink:0;border:none;font-family:inherit;pointer-events:auto;-webkit-tap-highlight-color:rgba(75,115,245,.2)}
+.lbk:active{background:var(--b400);transform:scale(.9)}
+.ltt{font-size:17px;font-weight:700;color:var(--g900)}
+.lctn{font-size:13px;color:var(--g400);margin-left:auto}
+.lsrch{margin:12px 16px 0}.lsw{position:relative}
+.lsi{width:100%;padding:12px 16px 12px 40px;border:1.5px solid var(--g200);border-radius:14px;font-size:14px;font-family:var(--f);color:var(--g900);background:var(--sc);outline:none;transition:all var(--df);box-sizing:border-box}
+.lsi:focus{border-color:var(--b500);box-shadow:0 0 0 3px rgba(75,115,245,.08)}
+.lsi-c{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--g400);pointer-events:none;font-size:15px}
+.lfl{display:flex;gap:8px;padding:12px 16px 0;overflow-x:auto;scrollbar-width:none}
+.lfl::-webkit-scrollbar{display:none}
+.lft{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;transition:all var(--df);border:1.5px solid var(--g200);background:var(--sc);color:var(--g500);font-family:var(--f)}
+.lft.on{background:var(--b500);color:#fff;border-color:var(--b500)}
+.lft:active{transform:scale(.96)}
+
+/* List Card */
+.lcc{background:var(--sc);border-radius:16px;padding:16px;margin-bottom:10px;cursor:pointer;transition:all var(--df) var(--eo);border-left:4px solid transparent}
+.lcc:active{transform:scale(.985);background:var(--g50)}
+.lcc.od{border-left-color:var(--d500)}.lcc.ac{border-left-color:var(--s500)}.lcc.done{border-left-color:var(--s600)}
+.lchr{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.lca{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
+.lca.danger{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.lca.safe{background:linear-gradient(135deg,var(--s500),#059669)}
+.lca.info{background:linear-gradient(135deg,var(--b500),var(--b600))}
+.lca.warn{background:linear-gradient(135deg,var(--w500),var(--w600))}
+.lcnm{flex:1;min-width:0}
+.lcn-t{font-size:16px;font-weight:700;color:var(--g900);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lcn-p{font-size:13px;color:var(--g400);margin-top:2px}
+.lcs{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;flex-shrink:0}
+.lcs.od{background:var(--d50);color:var(--d600)}.lcs.done{background:#ecfdf5;color:#059669}
+.lctg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.lcb{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px dashed var(--g200)}
+.lci{display:flex;gap:16px;font-size:12px;color:var(--g500)}
+.lcob{font-size:11px;font-weight:600;display:flex;align-items:center;gap:3px}
+.lcob.danger{color:var(--d500)}.lcoh{color:var(--s600)}
+.emp{display:flex;flex-direction:column;align-items:center;padding:48px 24px;text-align:center}
+.empi{font-size:48px;margin-bottom:12px}.empt{font-size:15px;font-weight:600;color:var(--g700);margin-bottom:6px}
+.emps{font-size:13px;color:var(--g400)}
+
+/* Detail Header */
+.dh{background:linear-gradient(160deg,var(--b600)0,var(--b500)60%,#5d87f8 100%);padding:12px 18px 26px;position:relative;overflow:hidden}
+.dh::after{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07)}
+.hn{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.hnb{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--df);border:none;font-family:inherit}
+.hnb:active{background:rgba(255,255,255,.28);transform:scale(.9)}
+.ht{font-size:16px;font-weight:600;color:#fff}
+.hp{display:flex;align-items:flex-start;gap:14px}
+.hav{width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.4)}
+.hif{flex:1}
+.hnm{font-size:22px;font-weight:800;color:#fff;margin-bottom:2px}
+.hp2{font-size:14px;color:rgba(255,255,255,.75);margin-bottom:8px}
+.htg{display:flex;gap:6px;flex-wrap:wrap}
+.hta{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.cbtn{background:#fff;color:var(--b600);border:none;border-radius:12px;padding:10px 18px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all var(--df);margin-top:16px;align-self:flex-start;font-family:var(--f)}
+.cbtn:active{transform:scale(.95)}
+
+/* Pipeline */
+.pc{margin:-12px 16px 0;background:var(--sc);border-radius:16px;padding:16px;box-shadow:0 4px 16px rgba(26,33,64,.1);position:relative;z-index:2}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.pl{font-size:12px;font-weight:600;color:var(--g500)}
+.ps2{font-size:13px;font-weight:700;color:var(--s600);display:flex;align-items:center;gap:4px}
+.ptk{display:flex;position:relative;margin-bottom:8px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.ptk::-webkit-scrollbar{display:none}
+.ps3{flex:1 0 auto;min-width:48px;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.pd{width:22px;height:22px;border-radius:50%;border:2px solid var(--g200);background:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--g400);margin-bottom:5px;transition:all var(--dm) var(--eo)}
+.pd.do{background:var(--s500);border-color:var(--s500);color:#fff}
+.pd.ac{background:var(--b500);border-color:var(--b500);color:#fff;box-shadow:0 0 0 4px var(--b100);animation:dpp 1.8s ease-in-out infinite}
+@keyframes dpp{0%,100%{box-shadow:0 0 0 4px var(--b100)}50%{box-shadow:0 0 0 8px var(--b100)}}
+.plb2{font-size:9px;font-weight:500;color:var(--g400);text-align:center;white-space:nowrap}
+.plb2.ac2{color:var(--b500);font-weight:700}.plb2.do2{color:var(--s600)}
+.pcon{position:absolute;top:11px;left:0;right:0;height:2px;background:var(--g200);z-index:0}
+.pcf{height:100%;background:linear-gradient(90deg,var(--s500),var(--b400));width:55%;border-radius:2px;transition:width .8s var(--eo)}
+
+/* Info Card */
+.ic{margin:12px 16px 0;background:var(--sc);border-radius:16px;padding:16px}
+.ict{font-size:13px;font-weight:700;color:var(--g700);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.irs{display:flex;flex-direction:column;gap:10px}
+.ir{display:flex;align-items:flex-start;gap:8px}
+.irl{font-size:12px;color:var(--g400);width:72px;flex-shrink:0;padding-top:1px}
+.irv{font-size:13px;color:var(--g700);font-weight:500;flex:1}
+.irv.ac{color:var(--b500)}.irv.wn{color:var(--d500);font-weight:600}
+
+/* Timeline */
+.lc{margin:12px 16px 0;background:var(--sc);border-radius:16px;padding:16px}
+.lh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.lt{font-size:13px;font-weight:700;color:var(--g700)}
+.lct{font-size:12px;color:var(--g400);background:var(--g100);padding:2px 8px;border-radius:20px}
+.li{display:flex;gap:12px;position:relative;padding-bottom:14px}
+.li:last-child{padding-bottom:0}
+.li:not(:last-child)::after{content:'';position:absolute;left:15px;top:30px;bottom:0;width:1px;background:var(--g200)}
+.ld{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;position:relative;z-index:1}
+.ld.gr{background:var(--s50)}.ld.bl{background:var(--i50)}.ld.am{background:var(--w50)}
+.lco{flex:1;padding-top:5px}
+.lac{font-size:13px;font-weight:600;color:var(--b500)}
+.ltr{display:flex;align-items:center;justify-content:space-between;margin-top:2px}
+.ldt{font-size:11px;color:var(--g400)}.lag{font-size:11px;color:var(--g300)}
+
+/* Detail Actions */
+.dc{margin:12px 16px 0;background:var(--sc);border-radius:16px;overflow:hidden}
+.dr{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background var(--df)}
+.dr:last-child{border-bottom:none}
+.dr:active{background:var(--g50)}
+.dri{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-right:12px;flex-shrink:0}
+.drl{font-size:13px;font-weight:600;color:var(--g700);flex:1}
+.drv{font-size:12px;color:var(--g400);margin-right:6px}
+.drv.do{color:var(--s600)}.drv.em{color:var(--g300)}
+.ch{color:var(--g300);font-size:14px}
+
+/* CTA Buttons */
+.ctab{margin:16px 16px 28px;display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.ctas{background:var(--b50);color:var(--b600);border:1px solid var(--b100);border-radius:16px;padding:14px;font-size:14px;font-weight:700;text-align:center;cursor:pointer;font-family:var(--f);transition:all var(--df)}
+.ctas:active{background:var(--b100);transform:scale(.96)}
+.ctap{background:linear-gradient(135deg,var(--b500),var(--b600));color:#fff;border:none;border-radius:16px;padding:14px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 4px 16px rgba(75,115,245,.35);font-family:var(--f);transition:all var(--df)}
+.ctap:active{transform:scale(.96);box-shadow:0 2px 8px rgba(75,115,245,.25)}
+
+/* Overlay / Modal */
+.om{position:fixed;inset:0;background:rgba(26,33,64,.5);z-index:200;opacity:0;visibility:hidden;transition:all var(--dm) var(--eo);backdrop-filter:blur(6px)}
+.om.sh{opacity:1;visibility:visible}
+.mdl{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);background:var(--sc);border-radius:24px;padding:28px 24px;z-index:201;width:calc(100%-36px);max-width:420px;opacity:0;visibility:hidden;transition:all var(--dm) var(--eb);box-shadow:0 24px 80px rgba(26,33,64,.3);max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.mdl.sh{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+.mtl{font-size:20px;font-weight:800;color:var(--g900);margin-bottom:6px}
+.mds{font-size:14px;color:var(--g500);margin-bottom:24px;line-height:1.5}
+.fg{margin-bottom:18px}
+.fl{font-size:14px;font-weight:700;color:var(--g700);margin-bottom:8px;display:block;letter-spacing:.02em}
+.fi{width:100%;padding:15px 16px;border:1.5px solid var(--g200);border-radius:14px;font-size:16px;font-family:var(--f);color:var(--g900);background:#fff;outline:none;transition:all var(--df);box-sizing:border-box;height:50px}
+.fi:focus{border-color:var(--b500);box-shadow:0 0 0 4px rgba(75,115,245,.12)}
+.ma{display:flex;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--g100)}
+.bcn{flex:1;padding:15px;border:1.5px solid var(--g200);border-radius:14px;font-size:16px;font-weight:700;color:var(--g500);background:#fff;cursor:pointer;font-family:var(--f);height:50px}
+.bcn:active{background:var(--g50)}
+.bcf{flex:1.3;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--b500),var(--b600));cursor:pointer;font-family:var(--f);box-shadow:0 6px 20px rgba(75,115,245,.35);height:50px}
+
+/* Bottom Sheet */
+.bs{position:fixed;left:0;right:0;bottom:0;z-index:202;background:var(--sc);border-radius:24px 24px 0 0;padding:20px 20px 34px;transform:translateY(120%);transition:transform .38s var(--eo);box-shadow:0 -8px 40px rgba(26,33,64,.15)}
+.bs.sh{transform:translateY(0)}
+.bsh{width:36px;height:4px;background:var(--g300);border-radius:2px;margin:0 auto 18px}
+.bst{font-size:17px;font-weight:700;color:var(--g900);text-align:center;margin-bottom:18px}
+.bsa{display:flex;flex-direction:column;gap:8px}
+.bsb{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--g50);border-radius:14px;cursor:pointer;transition:all var(--df);border:none;width:100%;text-align:left;font-family:var(--f)}
+.bsb:active{background:var(--g100);transform:scale(.99)}
+.bsbi{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.bsbt{font-size:14px;font-weight:600;color:var(--g700)}
+.bbsu{font-size:11px;color:var(--g400);margin-top:1px}
+.bsc{margin-top:16px;padding:12px;border:1px solid var(--g200);border-radius:14px;text-align:center;font-size:14px;font-weight:600;color:var(--g500);background:#fff;cursor:pointer;font-family:var(--f)}
+
+/* Add User Bottom Sheet (mobile-native) */
+.abm{position:fixed;left:0;right:0;bottom:0;z-index:202;background:var(--sc);border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .42s var(--eo);box-shadow:0 -8px 40px rgba(26,33,64,.2);max-height:92vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.abm.sh{transform:translateY(0)}
+.abm-h{position:relative;padding:14px 20px 18px;flex-shrink:0;border-bottom:1px solid var(--g100)}
+.abm-grab{width:40px;height:4px;background:var(--g300);border-radius:2px;margin:0 auto 14px}
+.abm-ht{font-size:20px;font-weight:800;color:var(--g900);letter-spacing:-.01em}
+.abm-hs{font-size:13px;color:var(--g500);margin-top:4px}
+.abm-c{position:absolute;top:14px;right:16px;width:34px;height:34px;border-radius:10px;background:var(--g50);border:none;font-size:20px;color:var(--g500);display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:var(--f);transition:all var(--df);line-height:1}
+.abm-c:active{background:var(--g200);transform:scale(.92)}
+.abm-b{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 20px 8px}
+.abm-g{margin-bottom:18px}
+.abm-l{font-size:14px;font-weight:700;color:var(--g700);margin-bottom:8px;display:flex;align-items:center;letter-spacing:.02em}
+.abm-l .req{color:var(--d500);margin-left:3px;font-size:15px}
+.abm-i{width:100%;padding:0 16px;border:1.5px solid var(--g200);border-radius:14px;font-size:17px;font-family:var(--f);color:var(--g900);background:var(--g50);outline:none;transition:all var(--df);box-sizing:border-box;height:54px;line-height:54px}
+.abm-i::placeholder{color:var(--g400);font-size:16px}
+.abm-i:focus{border-color:var(--b500);background:#fff;box-shadow:0 0 0 4px rgba(75,115,245,.12)}
+.abm-hint{font-size:12px;color:var(--g400);margin-top:6px;padding-left:2px}
+.abm-f{display:flex;gap:10px;padding:14px 20px calc(20px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--g100);background:var(--sc);flex-shrink:0}
+.abm-cn{flex:1;height:50px;border:1.5px solid var(--g200);border-radius:14px;font-size:16px;font-weight:700;color:var(--g500);background:#fff;cursor:pointer;font-family:var(--f);transition:all var(--df)}
+.abm-cn:active{background:var(--g50);transform:scale(.97)}
+.abm-cf{flex:2;height:50px;border:none;border-radius:14px;font-size:16px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--b500),var(--b600));cursor:pointer;font-family:var(--f);box-shadow:0 6px 20px rgba(75,115,245,.35);transition:all var(--df);display:flex;align-items:center;justify-content:center;gap:6px}
+.abm-cf:active{transform:scale(.97);box-shadow:0 3px 10px rgba(75,115,245,.25)}
+
+/* Toast */
+.tc{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.ts{background:var(--g900);color:#fff;padding:12px 22px;border-radius:14px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.2);white-space:nowrap;animation:ti .4s var(--eb) forwards,to .35s var(--eo) 2.2s forwards;pointer-events:auto}
+@keyframes ti{from{opacity:0;transform:translateY(-12px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes to{to{opacity:0;transform:translateY(-8px) scale(.95)}}
+
+/* Stat Popup */
+.spup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.8);background:var(--sc);border-radius:20px;padding:20px;z-index:203;min-width:280px;opacity:0;visibility:hidden;transition:all var(--dm) var(--eb);box-shadow:0 16px 48px rgba(26,33,64,.2)}
+.spup.sh{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ==================== HOME PAGE ==================== -->
+<div class="pv" id="pH">
+<!-- top bar -->
+<div class="tb"><div class="tbr"><div><div class="sn">王凯的门店 <span class="stg">三翼鸟全案</span></div><div class="tg2" id="grt">今天是个好日子，加油！💪</div></div><div style="position:relative" onclick="showToast('个人中心开发中')"><div class="av">王</div><span style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:#10b981;border-radius:50%;border:2px solid #fff"></span></div></div></div>
+
+<!-- stat cards -->
+<div class="ss"><div class="sg">
+<div class="sc cb" onclick="showStat('new')"><div class="sl">今日新增商机</div><div class="sv">4</div><div class="sttr"><span class="tu">↑ 2</span> 较昨日</div></div>
+<div class="sc cg" onclick="showStat('follow')"><div class="sl">今日跟进</div><div class="sv">36</div><div class="sttr"><span class="tu">↑ 8</span> 较昨日</div></div>
+<div class="sc ca" onclick="showStat('done')"><div class="sl">已成交商机</div><div class="sv">67</div><div class="sttr"><span class="tu">↑ 3</span> 本月</div></div>
+<div class="sc cd" onclick="showStat('lost')"><div class="sl">关闭/流失</div><div class="sv">732</div><div class="sttr"><span class="tdu">↑ 12</span> 本月</div></div>
+</div></div>
+
+<!-- alert banner -->
+<div class="al" onclick="goListPage('overdue')"><div class="aii">!</div><div class="att"><strong>4 条商机</strong> 已超期未跟进，及时处理</div><div class="aaa">立即处理 →</div></div>
+
+<!-- quick actions -->
+<div class="sec"><div class="sti">快捷操作</div><div class="qa">
+<div class="ab" onclick="openAddModal()"><div class="aic bl">➕</div><div class="alb">添加用户</div></div>
+<div class="ab" onclick="showToast('报表分析开发中')"><div class="aic gr">📊</div><div class="alb">报表分析</div></div>
+<div class="ab" onclick="showToast('日程管理开发中')"><div class="aic am">📅</div><div class="alb">我的日程</div></div>
+<div class="ab" onclick="openMoreSheet()"><div class="aic pr">⚙️</div><div class="alb">更多功能</div></div>
+</div></div>
+
+<!-- calendar / schedule section -->
+<div class="sec">
+<div class="shr"><span class="sti" style="margin:0">我的日程</span><span class="sa" onclick="showToast('查看全部日程')">查看全部</span></div>
+<div class="dts" id="dtabs"></div>
+<div id="clist"></div>
+<div class="vat" onclick="goListPage('all')">查看全部用户 →</div>
+</div>
+</div><!-- end #pH -->
+
+<!-- ==================== LIST PAGE ==================== -->
+<div class="pv hr" id="pL">
+<div class="lsb"><button class="lbk" onclick="backToListHome()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a2140" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button><span class="ltt">全部用户</span><span class="lctn" id="lcnt">0 人</span></div>
+<div class="lsrch"><div class="lsw"><span class="lsi-c">🔍</span><input class="lsi" id="lsearch" placeholder="搜索姓名 / 手机号 / 小区" oninput="onSearchInput(this.value)"></div></div>
+<div class="lfl" id="lflt">
+<button class="lft on" data-f="all" onclick="switchFilter(this,'all')">全部</button>
+<button class="lft" data-f="overdue" onclick="switchFilter(this,'overdue')">超期 <span id="fOd">4</span></button>
+<button class="lft" data-f="follow" onclick="switchFilter(this,'follow')">跟进中</button>
+<button class="lft" data-f="done" onclick="switchFilter(this,'done')">已签约</button>
+</div>
+<div id="lbody"></div>
+</div><!-- end #pL -->
+
+<!-- ==================== DETAIL PAGE ==================== -->
+<div class="pv hr" id="pD">
+<div class="dh">
+<div class="hn"><div class="hnb" onclick="goBack()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></div><span class="ht">用户信息</span><div class="hnb" onclick="showToast('更多操作')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.5" fill="#fff"/><circle cx="12" cy="12" r="1.5" fill="#fff"/><circle cx="12" cy="19" r="1.5" fill="#fff"/></svg></div></div>
+<div class="hp"><div class="hav" id="haV">王</div><div class="hif"><div class="hnm" id="hnV">—</div><div class="hp2" id="hpV">—</div><div class="htg" id="htgV"></div></div><button class="cbtn" onclick="makeCall()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.28a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> 拨打</button></div></div>
+<div class="pc"><div class="ph"><span class="pl">跟进阶段</span><span class="ps2" id="pst"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> —</span></div>
+<div style="position:relative"><div class="pcon"><div class="pcf" id="pcf"></div></div><div class="ptk" id="ptk"></div></div></div>
+<div class="ic"><div class="ict">📋 基本信息</div><div class="irs" id="irR"></div></div>
+<div class="lc"><div class="lh"><span class="lt">📝 跟进记录</span><div style="display:flex;align-items:center;gap:8px"><span class="lct" id="lcT">共0条</span><span style="font-size:12px;color:var(--b500);font-weight:600;cursor:pointer" onclick="showToast('查看更多记录')">更多 ›</span></div></div><div id="llist"></div></div>
+<div class="dc" id="dcR"></div>
+<div class="ctab"><button class="ctas" onclick="showToast('编辑功能开发中')">编辑信息</button><button class="ctap" onclick="openFollowSheet()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 回访跟进</button></div>
+</div><!-- end #pD -->
+
+</div><!-- end #app -->
+
+<!-- Overlays -->
+<div class="om" id="om" onclick="closeAllOverlays()"></div>
+
+<!-- Add User Bottom Sheet (mobile-native) -->
+<div class="abm" id="am">
+<div class="abm-h">
+<div class="abm-grab"></div>
+<div class="abm-ht">添加新用户</div>
+<div class="abm-hs">快速录入客户信息，开始跟进</div>
+<button class="abm-c" onclick="closeAddModal()" aria-label="关闭">&times;</button>
+</div>
+<div class="abm-b">
+<div class="abm-g">
+<label class="abm-l">客户姓名<span class="req">*</span></label>
+<input class="abm-i" id="inN" placeholder="请输入客户姓名" autocomplete="off">
+</div>
+<div class="abm-g">
+<label class="abm-l">手机号码<span class="req">*</span></label>
+<input class="abm-i" id="inP" placeholder="请输入11位手机号" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="11">
+<div class="abm-hint">用于客户联系和身份识别</div>
+</div>
+<div class="abm-g">
+<label class="abm-l">意向品类</label>
+<input class="abm-i" id="inC" placeholder="如：冰箱、洗衣机、定制等" autocomplete="off">
+<div class="abm-hint">多个品类可用逗号分隔</div>
+</div>
+</div>
+<div class="abm-f">
+<button class="abm-cn" onclick="closeAddModal()">取消</button>
+<button class="abm-cf" onclick="confirmAddUser()">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+确认添加
+</button>
+</div>
+</div>
+
+<!-- More Sheet -->
+<div class="bs" id="ms"><div class="bsh"></div><div class="bst">更多功能</div><div class="bsa">
+<button class="bsb" onclick="showToast('批量导入');closeMoreSheet()"><div class="bsbi" style="background:var(--b50)">📥</div><div><div class="bsbt">批量导入</div><div class="bbsu">从Excel/表格导入客户</div></div></button>
+<button class="bsb" onclick="showToast('消息通知');closeMoreSheet()"><div class="bsbi" style="background:var(--w50)">🔔</div><div><div class="bsbt">消息通知</div><div class="bbsu">系统推送和提醒</div></div></button>
+<button class="bsb" onclick="showToast('数据导出');closeMoreSheet()"><div class="bsbi" style="background:var(--s50)">📤</div><div><div class="bsbt">数据导出</div><div class="bbsu">导出数据和报表</div></div></button>
+<button class="bsb" onclick="showToast('设置');closeMoreSheet()"><div class="bsbi" style="background:var(--g100)">⚙️</div><div><div class="bsbt">设置</div><div class="bbsu">账号与偏好设置</div></div></button>
+</div><button class="bsc" onclick="closeMoreSheet()">取消</button></div>
+
+<!-- Follow-up Sheet -->
+<div class="bs" id="fs"><div class="bsh"></div><div class="bst">回访跟进</div>
+<div class="fg"><label class="fl">跟进类型</label><input class="fi" id="fuT" value="电话沟通" readonly style="background:var(--g50)" onclick="cycleFollowType()"></div>
+<div class="fg"><label class="fl">跟进内容</label><textarea class="fi" id="fuC" rows="3" placeholder="输入本次跟进内容..." style="resize:none"></textarea></div>
+<div class="fg"><label class="fl">下次跟进时间</label><input class="fi" type="datetime-local" id="fuD"></div>
+<div class="ma" style="margin-top:18px"><button class="bcn" onclick="closeFollowSheet()">取消</button><button class="bcf" onclick="submitFollowUp()">提交跟进</button></div>
+</div>
+
+<!-- Stat Popup -->
+<div class="spup" id="spup">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+<div class="spn" id="spn" style="font-size:42px;font-weight:800;line-height:1;color:var(--b500)">0</div>
+<span style="font-size:24px;cursor:pointer;color:var(--g400)" onclick="closeStatPopup()">&times;</span>
+</div>
+<div id="spb" style="font-size:13px;color:var(--g500);line-height:1.7"></div>
+</div>
+
+<!-- Toast Container -->
+<div class="tc" id="tc"></div>
+
+<script>
+
+// ============================================================
+// CRM Vibe Coding - Complete JavaScript
+// ============================================================
+
+// ---- Data ----
+var users = [
+  {id:1,name:'张伟',phone:'138****6210',community:'阳光花园',tags:['冰箱','洗衣机'],status:'follow',stage:2,overdue:true,amount:'￥32,800',lastFollow:'3天前',nextFollow:'2026-06-05',note:'意向较强，已出方案报价'},
+  {id:2,name:'李娜',phone:'139****8847',community:'翠苑小区',tags:['空调','全屋净水'],status:'done',stage:5,overdue:false,amount:'￥58,600',lastFollow:'1天前',nextFollow:'',note:'已签约全屋方案'},
+  {id:3,name:'王芳',phone:'137****3321',community:'绿城百合',tags:['定制衣柜'],status:'follow',stage:3,overdue:true,amount:'￥25,000',lastFollow:'7天前',nextFollow:'2026-06-01',note:'订单已下，等待发货'},
+  {id:4,name:'赵强',phone:'136****5598',community:'万达广场',tags:['电视','音响'],status:'follow',stage:1,overdue:false,amount:'￥18,900',lastFollow:'今天',nextFollow:'2026-06-10',note:'初次沟通，对比竞品中'},
+  {id:5,name:'陈静',phone:'158****7723',community:'滨江一号',tags:['洗碗机','烤箱'],status:'overdue',stage:0,overdue:true,amount:'￥15,200',lastFollow:'12天前',nextFollow:'2026-05-28',note:'待分派负责人跟进'},
+  {id:6,name:'刘洋',phone:'159****1156',community:'龙湖春江',tags:['中央空调'],status:'follow',stage:3,overdue:false,amount:'￥42,000',lastFollow:'2天前',nextFollow:'2026-06-12',note:'技术参数确认中，准备下单'},
+  {id:7,name:'孙丽',phone:'135****9945',community:'保利西子',tags:['冰箱','空调','洗烘'],status:'done',stage:5,overdue:false,amount:'￥76,500',lastFollow:'5天前',nextFollow:'',note:'VIP客户，已完成交付安装'},
+  {id:8,name:'周明',phone:'188****2234',community:'万科金域',tags:['智能锁','安防'],status:'follow',stage:2,overdue:true,amount:'￥8,600',lastFollow:'5天前',nextFollow:'2026-06-04',note:'设计方案进行中'}
+];
+
+var followRecords = {
+  1:[
+    {type:'call',content:'客户反馈冰箱噪音问题，已解释正常范围',time:'今天 14:30',agent:'王凯'},
+    {type:'visit',content:'上门展示样机，客户对BCD-501型号满意',time:'06-04 16:00',agent:'王凯'},
+    {type:'call',content:'初步沟通需求，记录意向品类',time:'06-01 10:20',agent:'王凯'}
+  ],
+  2:[
+    {type:'call',content:'确认签约细节及安装时间',time:'06-07 11:00',agent:'王凯'},
+    {type:'visit',content:'现场复尺，确认最终方案',time:'06-05 15:30',agent:'王凯'}
+  ],
+  3:[{type:'call',content:'预约量尺时间',time:'05-30 09:00',agent:'王凯'}],
+  4:[{type:'call',content:'介绍促销活动信息',time:'06-08 11:20',agent:'王凯'}],
+  5:[],
+  6:[{type:'call',content:'发送产品技术手册',time:'06-06 14:00',agent:'王凯'}],
+  7:[{type:'call',content:'完成交接，安排安装',time:'06-03 16:30',agent:'王凯'}],
+  8:[{type:'call',content:'初步了解智能家居需求',time:'06-03 10:15',agent:'王凯'}]
+};
+
+var stageNames = ['待分派','沟通中','设计报价','订单物流','交付安装','完成/流失'];
+var curPage='pH',fromPage='pH',curUser=null,curFilter='all',searchQ='';
+var followTypes=['电话沟通','上门拜访','微信跟进','短信提醒'];
+
+// ---- Init ----
+function initApp(){
+  renderCalendar();
+  renderHomeCards();
+  setGreeting();
+}
+
+function setGreeting(){
+  var h=new Date().getHours();
+  var t='';
+  if(h<9)t='早安！新的一天开始了 ☀️';
+  else if(h<12)t='上午好！加油冲刺 🚀';
+  else if(h<14)t='中午好！注意休息 😊';
+  else if(h<18)t='下午好！继续努力 💪';
+  else t='辛苦了！记得放松 🌙';
+  var el=document.getElementById('grt');
+  if(el)el.textContent=t;
+}
+
+// ---- Calendar ----
+function renderCalendar(){
+  var c=document.getElementById('dtabs');
+  if(!c)return;
+  var html='',today=new Date();
+  for(var i=-2;i<=4;i++){
+    var d=new Date(today);d.setDate(d.getDate()+i);
+    var dow=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+    var isToday=i===0;
+    var dot=(i===0)?'<div class="ddot"></div>':'';
+    var cls=isToday?' dt.on':'';
+    html+='<div class="dt'+cls+'" onclick="selectDate(this,'+i+')"><div class="dnm">'+dow+'</div><div class="dnu">'+d.getDate()+'</div>'+dot+'</div>';
+  }
+  c.innerHTML=html;
+  // show today's customers
+  showDateCustomers(0);
+}
+
+function selectDate(el,offset){
+  var tabs=document.querySelectorAll('.dt');
+  for(var i=0;i<tabs.length;i++)tabs[i].className='dt';
+  el.className='dt on';
+  showDateCustomers(offset);
+}
+
+function showDateCustomers(offset){
+  var list=document.getElementById('clist');
+  if(!list)return;
+  // show 2-3 cards based on offset
+  var display=[];
+  if(offset===0){
+    display=[users[0],users[3]]; // today
+  }else if(offset===1){
+    display=[users[5]]; // tomorrow
+  }else if(offset===-1){
+    display=[users[7],users[2]]; // yesterday
+  }else{
+    display=[users[1],users[6]]; // other days
+  }
+  var html='';
+  for(var i=0;i<display.length;i++){
+    var u=display[i];
+    var oc=u.overdue?' od':'';
+    var ac=(u.status==='done'||u.status==='follow')&&!u.overdue?' ac':'';
+    var tagHtml='';
+    for(var j=0;j<u.tags.length;j++){
+      tagHtml+='<span class="cg">'+u.tags[j]+'</span>';
+    }
+    var stgHtml='';
+    if(u.overdue){
+      stgHtml='<span class="sbg bo">⚠ 超期</span>';
+    }else if(u.status==='done'){
+      stgHtml='<span class="sbg bgr">✓ 已签</span>';
+    }
+    html+='<div class="cc'+oc+ac+'" onclick="goDetailFromHome('+u.id+')"><div class="cr1"><span class="cn">'+u.name+'</span><span class="cp">'+u.phone+'</span>'+stgHtml+'</div><div class="cgs">'+tagHtml+'</div><div class="cm"><div class="ci"><span>📍 '+u.community+'</span><span>💰 '+u.amount+'</span></div><span class="obb">↑ 跟进 '+u.lastFollow+'</span></div></div>';
+  }
+  list.innerHTML=html;
+}
+
+// ---- Home Cards ----
+function renderHomeCards(){
+  // cards are static in HTML, just ensure data binding
+}
+
+// ---- Navigation ----
+function goListPage(filterType){
+  fromPage='pH';
+  curFilter=filterType||'all';
+  document.getElementById('pL').className='pv';
+  document.getElementById('pL').style.transform='';
+  setTimeout(function(){renderListPage();},80);
+}
+
+function backToListHome(){
+  closeAllOverlays();
+  // always go home from list page (list page is only entered from home)
+  document.getElementById('pL').className='pv hl';
+  curPage='pH';
+  fromPage='pH';
+}
+
+function goDetailFromHome(uid){
+  fromPage='pH';
+  curUser=uid;
+  document.getElementById('pD').className='pv';
+  document.getElementById('pD').style.transform='';
+  setTimeout(function(){renderDetailPage(uid);},80);
+}
+
+function goDetailFromList(uid){
+  fromPage='pL';
+  curUser=uid;
+  document.getElementById('pD').className='pv';
+  document.getElementById('pD').style.transform='';
+  setTimeout(function(){renderDetailPage(uid);},80);
+}
+
+function goBack(){
+  closeAllOverlays();
+  document.getElementById('pD').className='pv hr';
+  setTimeout(function(){
+    if(fromPage==='pL'){
+      document.getElementById('pL').className='pv';
+      document.getElementById('pL').style.transform='';
+      curPage='pL';
+    }else{
+      document.getElementById('pH').className='pv';
+      curPage='pH';
+    }
+    curUser=null;
+  },350);
+}
+
+// ---- List Page Render ----
+function renderListPage(){
+  var data=filterAndSearch();
+  var body=document.getElementById('lbody');
+  var cnt=document.getElementById('lcnt');
+  if(cnt)cnt.textContent=data.length+' 人';
+  
+  if(data.length===0){
+    body.innerHTML='<div class="emp"><div class="empi">🔍</div><div class="empt">没有找到匹配的用户</div><div class="emps">试试其他搜索条件</div></div>';
+    return;
+  }
+  
+  var html='';
+  for(var idx=0;idx<data.length;idx++){
+    var u=data[idx];
+    // determine card style
+    var bcls='';
+    var lcsCls='';
+    var lcsText='';
+    if(u.status==='done'){bcls=' done';lcsCls=' done';lcsText='已签约';}
+    else if(u.overdue){bcls=' od';lcsCls=' od';lcsText='超期';}
+    else if(u.status==='follow'){bcls=' ac';lcsText='跟进中';}
+    
+    // avatar color
+    var avatarCls='info';
+    if(u.overdue)avatarCls='danger';
+    else if(u.status==='done')avatarCls='safe';
+    else if(u.stage>=3)avatarCls='warn';
+    
+    // tags
+    var tagStr='';
+    for(var ti=0;ti<u.tags.length;ti++){
+      tagStr+='<span class="cg">'+u.tags[ti]+'</span>';
+    }
+    
+    // overdue info
+    var obInfo='';
+    if(u.overdue){
+      obInfo='<span class="lcob danger">⚠ 超期'+u.lastFollow+'</span>';
+    }else{
+      obInfo='<span class="lcoh">↑ '+u.lastFollow+'</span>';
+    }
+    
+    html+='<div class="lcc'+bcls+'" onclick="goDetailFromList('+u.id+')">'+
+      '<div class="lchr"><div class="lca '+avatarCls+'">'+u.name.charAt(0)+'</div>'+
+      '<div class="lcnm"><span class="lcn-t">'+u.name+'</span><span class="lcn-p">'+u.phone+' · '+u.community+'</span></div>'+
+      '<span class="lcs '+lcsCls+'">'+lcsText+'</span></div>'+
+      '<div class="lctg">'+tagStr+'</div>'+
+      '<div class="lcb"><div class="lci"><span>💰 '+u.amount+'</span><span>📋 '+stageNames[u.stage]+'</span></div>'+obInfo+'</div></div>';
+  }
+  body.innerHTML=html;
+}
+
+function filterAndSearch(){
+  var arr=[];
+  for(var i=0;i<users.length;i++){
+    var u=users[i];
+    var match=true;
+    // filter
+    if(curFilter==='overdue'&&!u.overdue)match=false;
+    if(curFilter==='follow'&&u.status!=='follow')match=false;
+    if(curFilter==='done'&&u.status!=='done')match=false;
+    // search
+    if(searchQ&&match){
+      var sq=searchQ.toLowerCase();
+      if(u.name.toLowerCase().indexOf(sq)<0&&u.phone.indexOf(sq)<0&&u.community.toLowerCase().indexOf(sq)<0){
+        match=false;
+      }
+    }
+    if(match)arr.push(u);
+  }
+  return arr;
+}
+
+function switchFilter(el,f){
+  curFilter=f;
+  var btns=document.querySelectorAll('.lft');
+  for(var i=0;i<btns.length;i++)btns[i].className='lft';
+  el.className='lft on';
+  renderListPage();
+}
+
+function onSearchInput(val){
+  searchQ=val.trim();
+  renderListPage();
+}
+
+// ---- Detail Page Render ----
+function renderDetailPage(uid){
+  var u=null;
+  for(var i=0;i<users.length;i++){
+    if(users[i].id===uid){u=users[i];break;}
+  }
+  if(!u)return;
+
+  // header
+  document.getElementById('haV').textContent=u.name.charAt(0);
+  document.getElementById('hnV').textContent=u.name;
+  document.getElementById('hpV').textContent=u.phone+' · '+u.community;
+  
+  // tags
+  var tgEl=document.getElementById('htgV');
+  var tgHt='';
+  for(var i=0;i<u.tags.length;i++){
+    tgHt+='<span class="hta">'+u.tags[i]+'</span>';
+  }
+  tgEl.innerHTML=tgHt;
+  
+  // pipeline
+  var pcfEl=document.getElementById('pcf');
+  var ptkEl=document.getElementById('ptk');
+  var pstEl=document.getElementById('pst');
+  
+  var stageNamesShort=['待分','沟通','报价','物流','安装','完成'];
+  var pctVal=Math.max(0,Math.min((u.stage)/5*100,100));
+  pcfEl.style.width=pctVal+'%';
+  pstEl.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg> 第'+(u.stage+1)+'阶段 · '+stageNames[u.stage];
+  
+  var tkHtml='';
+  for(var si=0;si<stageNames.length;si++){
+    var cls='';
+    if(si<u.stage)cls=' do';
+    else if(si===u.stage)cls=' ac';
+    // special: last stage done = green check, last stage lost = red X
+    var iconChar=(si<u.stage?'✓':si+1);
+    tkHtml+='<div class="ps3"><div class="pd'+cls+'">'+iconChar+'</div><div class="plb2'+(si===u.stage?' ac2':'')+(si<u.stage?' do2':'')+'">'+stageNamesShort[si]+'</div></div>';
+  }
+  ptkEl.innerHTML=tkHtml;
+  
+  // info rows
+  var irEl=document.getElementById('irR');
+  var irHtml='';
+  var infoFields=[
+    ['手机号',u.phone,true],
+    ['小区地址',u.community,false],
+    ['意向金额',u.amount,u.overdue],
+    ['当前阶段',stageNames[u.stage],false],
+    ['下次跟进',u.nextFollow||'—',u.overdue],
+    ['备注',u.note||'—',false]
+  ];
+  for(var fi=0;fi<infoFields.length;fi++){
+    var f=infoFields[fi];
+    var valCls=f[2]?' wn':'';
+    irHtml+='<div class="ir"><span class="irl">'+f[0]+'</span><span class="irv'+valCls+'">'+f[1]+'</span></div>';
+  }
+  irEl.innerHTML=irHtml;
+  
+  // timeline
+  var llEl=document.getElementById('llist');
+  var lcT=document.getElementById('lcT');
+  var recs=followRecords[uid]||[];
+  lcT.textContent='共'+recs.length+'条';
+  if(recs.length===0){
+    llEl.innerHTML='<div style="padding:20px;text-align:center;color:var(--g400);font-size:13px">暂无跟进记录</div>';
+  }else{
+    var tlHtml='';
+    for(var ri=0;ri<recs.length;ri++){
+      var r=recs[ri];
+      var dotCls='bl';
+      if(r.type==='visit')dotCls='gr';
+      else if(r.type==='sms')dotCls='am';
+      var typeLabel={'call':'电话','visit':'拜访','wechat':'微信','sms':'短信'}[r.type]||r.type;
+      tlHtml+='<div class="li"><div class="ld '+dotCls+'">'+typeLabel.charAt(0)+'</div><div class="lco"><div class="lac">'+r.content+'</div><div class="ltr"><span class="ldt">'+r.time+' · '+r.agent+'</span><span class="lag">'+typeLabel+'</span></div></div></div>';
+    }
+    llEl.innerHTML=tlHtml;
+  }
+  
+  // action rows
+  var dcEl=document.getElementById('dcR');
+  dcEl.innerHTML=
+    '<div class="dr" onclick="showToast(\''+u.name+'的编辑功能开发中\')"><div class="dri" style="background:var(--b50)">✏️</div><span class="drl">编辑信息</span><span class="drv em">修改基本信息</span></div>'+
+    '<div class="dr" onclick="showToast(\'任务分配开发中\')"><div class="dri" style="background:var(--w50)">👥</div><span class="drl">分配任务</span><span class="drv em">指派给同事</span></div>'+
+    (u.status!=='done'?
+    '<div class="dr" onclick="openFollowSheet()"><div class="dri" style="background:var(--s50)">📞</div><span class="drl">添加回访</span><span class="drv do">计划跟进</span></div>':'')+
+    '<div class="dr" onclick="showToast(\'更多操作\')" style="border-bottom:none"><div class="dri" style="background:var(--g100)">⋯</div><span class="drl">更多操作</span><span class="drv em"></span></div>';
+}
+
+// ---- Interactions ----
+function showToast(msg){
+  var tc=document.getElementById('tc');
+  var ts=document.createElement('div');
+  ts.className='ts';
+  ts.textContent=msg;
+  tc.appendChild(ts);
+  setTimeout(function(){
+    if(ts.parentNode)ts.parentNode.removeChild(ts);
+  },2600);
+}
+
+// Stat Popup
+function showStat(type){
+  var titles={new:'今日新增商机',follow:'今日跟进',done:'已成交商机',lost:'关闭/流失'};
+  var values={new:4,follow:36,done:67,lost:732};
+  var descs={
+    new:['较昨日 ↑ 2 (+100%)','本周累计 18 单','本月累计 72 单'],
+    follow:['较昨日 ↑ 8 (+28.6%)','电话沟通 22 次','上门拜访 8 次'],
+    done:['较上月 ↑ 3 (+4.7%)','本月目标 120 单','完成进度 55.8%'],
+    lost:['较上月 ↑ 12 (+1.7%)','主要流失原因：价格竞争','建议：加强跟进频率']
+  };
+  
+  document.getElementById('spn').textContent=values[type];
+  var descHtml='';
+  var arr=descs[type]||[];
+  for(var i=0;i<arr.length;i++){descHtml+='<div>'+arr[i]+'</div>';}
+  document.getElementById('spb').innerHTML=descHtml;
+  
+  var pop=document.getElementById('spup');
+  pop.classList.add('sh');
+}
+
+function closeStatPopup(){
+  document.getElementById('spup').classList.remove('sh');
+}
+
+// Add User Bottom Sheet
+function openAddModal(){
+  document.getElementById('om').classList.add('sh');
+  var el=document.getElementById('am');
+  el.classList.add('sh');
+  // reset form
+  var n=document.getElementById('inN');if(n)n.value='';
+  var p=document.getElementById('inP');if(p)p.value='';
+  var c=document.getElementById('inC');if(c)c.value='';
+  // focus name input after slide-up animation
+  setTimeout(function(){if(n){n.focus();}},420);
+}
+function closeAddModal(){
+  document.getElementById('om').classList.remove('sh');
+  document.getElementById('am').classList.remove('sh');
+  // blur any active input to hide mobile keyboard
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+}
+function confirmAddUser(){
+  var name=document.getElementById('inN').value.trim();
+  var phone=document.getElementById('inP').value.trim();
+  if(!name){showToast('请输入客户姓名');return;}
+  if(!phone||phone.length!==11){showToast('请输入正确的手机号');return;}
+  var cat=document.getElementById('inC').value.trim()||'待确认';
+  var nu={
+    id:users.length+1,
+    name:name,
+    phone:phone.substring(0,3)+'****'+phone.substring(7),
+    community:'手动添加',
+    tags:cat.split(',').map(function(s){return s.trim();}).filter(Boolean),
+    status:'follow',
+    stage:0,
+    overdue:false,
+    amount:'待报价',
+    lastFollow:'刚刚',
+    nextFollow:'',
+    note:cat? '意向：'+cat:'新客户'
+  };
+  users.push(nu);
+  closeAddModal();
+  showToast(name+' 添加成功 ✓');
+  document.getElementById('inN').value='';
+  document.getElementById('inP').value='';
+  document.getElementById('inC').value='';
+  renderListPage();
+}
+
+// More Sheet
+function openMoreSheet(){
+  document.getElementById('om').classList.add('sh');
+  document.getElementById('ms').classList.add('sh');
+}
+function closeMoreSheet(){
+  document.getElementById('om').classList.remove('sh');
+  document.getElementById('ms').classList.remove('sh');
+}
+
+// Follow-up Sheet
+var ftypeIdx=0;
+function openFollowSheet(){
+  ftypeIdx=0;
+  document.getElementById('fuT').value=followTypes[0];
+  document.getElementById('fuC').value='';
+  // default datetime: tomorrow 9am
+  var tmrw=new Date();
+  tmrw.setDate(tmrw.getDate()+1);
+  tmrw.setHours(9,0,0,0);
+  var iso=tmrw.toISOString().slice(0,16);
+  document.getElementById('fuD').value=iso;
+  document.getElementById('om').classList.add('sh');
+  document.getElementById('fs').classList.add('sh');
+}
+function closeFollowSheet(){
+  document.getElementById('om').classList.remove('sh');
+  document.getElementById('fs').classList.remove('sh');
+}
+function cycleFollowType(){
+  ftypeIdx=(ftypeIdx+1)%followTypes.length;
+  document.getElementById('fuT').value=followTypes[ftypeIdx];
+}
+function submitFollowUp(){
+  var content=document.getElementById('fuC').value.trim();
+  if(!content){showToast('请填写跟进内容');return;}
+  if(!curUser){showToast('未选择用户');return;}
+  // add record
+  if(!followRecords[curUser])followRecords[curUser]=[];
+  var now=new Date();
+  var timeStr=(now.getMonth()+1)+'-'+now.getDate()+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  followRecords[curUser].unshift({
+    type:followTypes[ftypeIdx]==='电话沟通'?'call':followTypes[ftypeIdx]==='上门拜访'?'visit':'wechat',
+    content:content,
+    time:timeStr,
+    agent:'王凯'
+  });
+  closeFollowSheet();
+  showToast('跟进记录已提交 ✓');
+  renderDetailPage(curUser);
+  document.getElementById('fuC').value='';
+}
+
+// Close all overlays
+function closeAllOverlays(){
+  document.getElementById('om').classList.remove('sh');
+  document.getElementById('am').classList.remove('sh');
+  document.getElementById('ms').classList.remove('sh');
+  document.getElementById('fs').classList.remove('sh');
+  document.getElementById('spup').classList.remove('sh');
+}
+
+// Make call
+function makeCall(){
+  if(!curUser)return;
+  for(var i=0;i<users.length;i++){
+    if(users[i].id===curUser){
+      showToast('正在拨打 '+users[i].name+' 的电话...');
+      return;
+    }
+ }
+}
+
+// ---- Boot ----
+initApp();
+</script>
+</body>
+</html>
