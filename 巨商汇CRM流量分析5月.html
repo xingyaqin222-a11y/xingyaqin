@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巨商汇端 CRM使用数据分析</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f0f2f5; --card: #ffffff; --card-hover: #f5f7fa;
+    --text: #1a1a2e; --text-muted: #64748b; --accent: #2563eb;
+    --accent2: #7c3aed; --accent3: #059669; --accent4: #ea580c;
+    --border: #e2e8f0; --danger: #dc2626;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    padding: 16px 24px; max-width: 1440px; margin: 0 auto;
+  }
+  .header { text-align: center; margin-bottom: 16px; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .header .sub { color: var(--text-muted); font-size: 14px; }
+  .header .period { color: var(--accent); font-weight: 600; }
+  .header .warn { color: var(--danger); font-size: 12px; margin-top: 4px; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 12px; text-align: center; transition: all 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .kpi-card .val { font-size: 28px; font-weight: 700; }
+  .kpi-card .label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .kpi-card .delta { font-size: 11px; color: var(--danger); margin-top: 1px; }
+  .kpi-card.blue .val { color: var(--accent); }
+  .kpi-card.purple .val { color: var(--accent2); }
+  .kpi-card.green .val { color: var(--accent3); }
+  .kpi-card.orange .val { color: var(--accent4); }
+
+  .section { margin-bottom: 16px; }
+  .section-title {
+    font-size: 16px; font-weight: 600; margin-bottom: 10px;
+    padding-left: 10px; border-left: 3px solid var(--accent);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .chart-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; position: relative;
+  }
+  .chart-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
+  .chart-wrap { position: relative; width: 100%; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f1f5f9; padding: 10px 12px; text-align: left; font-weight: 600; position: sticky; top: 0; z-index: 1; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: var(--card-hover); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pct { text-align: right; color: var(--accent); }
+
+  .insight-box {
+    background: linear-gradient(135deg, rgba(37,99,235,0.04), rgba(124,58,237,0.04));
+    border: 1px solid rgba(37,99,235,0.15); border-radius: 12px; padding: 20px; margin-top: 28px;
+  }
+  .insight-box h3 { color: var(--accent); margin-bottom: 12px; font-size: 16px; }
+  .insight-box ul { padding-left: 18px; }
+  .insight-box li { margin-bottom: 8px; font-size: 13px; line-height: 1.7; color: var(--text); }
+  .insight-box strong { color: var(--accent3); }
+
+  /* 门店排名区域样式 */
+  .rank-filters { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  .rank-filter-btn {
+    padding: 5px 14px; border-radius: 16px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-muted); cursor: pointer;
+    font-size: 12px; transition: all .2s;
+  }
+  .rank-filter-btn.active, .rank-filter-btn:hover {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
+  .rank-search {
+    padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: 12px;
+    margin-left: auto; width: 200px; outline: none;
+  }
+  .rank-search:focus { border-color: var(--accent); }
+  .rank-search::placeholder { color: var(--text-muted); }
+
+  .rank-table-wrap { max-height: 520px; overflow-y: auto; border-radius: 8px; }
+  .rank-table-wrap table th { background: #f1f5f9; }
+  .rank-table-wrap table td { font-size: 12px; padding: 8px 10px; }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 700;
+  }
+  .rank-1 { background: linear-gradient(135deg,#ffd700,#f0a500); color: #333; }
+  .rank-2 { background: linear-gradient(135deg,#c0c0c0,#8a8a8a); color: #fff; }
+  .rank-3 { background: linear-gradient(135deg,#cd7f32,#a0522d); color: #fff; }
+  .rank-n { background: var(--card-hover); color: var(--text-muted); }
+
+  .tier-deep { color: var(--accent3); font-weight: 600; }
+  .tier-active { color: var(--accent); font-weight: 600; }
+  .tier-light { color: var(--accent4); }
+  .tier-passive { color: var(--text-muted); }
+
+  .rank-pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-top: 14px; font-size: 13px; color: var(--text-muted);
+  }
+  .rank-pagination button {
+    padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); cursor: pointer; font-size: 12px;
+  }
+  .rank-pagination button:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .rank-pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .rank-pagination button:disabled:hover { background: transparent; color: var(--text); }
+
+  .tier-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+  .tier-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; text-align: center;
+  }
+  .tier-card .tv { font-size: 24px; font-weight: 700; }
+  .tier-card .tl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .tier-card .td { font-size: 11px; margin-top: 2px; }
+
+  @media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } .tier-summary { grid-template-columns: repeat(2,1fr); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>巨商汇端 CRM使用数据分析</h1>
+  <div class="sub">数据周期：<span class="period">2026-04-28 ~ 2026-05-27</span>（近30天） | 数据来源：CRM流量看板明细</div>
+  <div class="warn">已剔除测试门店「青岛瑞邦家居集成有限公司」（编码 8800014331，原1,428条记录，占总量47.6%）</div>
+</div>
+
+<!-- KPI卡片 -->
+<div class="kpi-row">
+  <div class="kpi-card blue"><div class="val">3,000</div><div class="label">总访问量（埋点事件·全量）</div></div>
+  <div class="kpi-card blue"><div class="val">1,571</div><div class="label">总访问量（剔除测试门店后）</div><div class="delta" style="color:var(--accent4)">剔除1,428条（-47.6%）</div></div>
+  <div class="kpi-card purple"><div class="val">218</div><div class="label">独立访问门店数</div></div>
+  <div class="kpi-card green"><div class="val">235</div><div class="label">独立访问用户数</div></div>
+  <div class="kpi-card orange"><div class="val">54</div><div class="label">独立登录用户数</div></div>
+  <div class="kpi-card blue"><div class="val">33</div><div class="label">覆盖小微区域</div></div>
+  <div class="kpi-card purple"><div class="val">11</div><div class="label">功能节点数</div></div>
+</div>
+
+<!-- 一、分端来源总览 -->
+<div class="section">
+  <div class="section-title">一、分端来源总览</div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>分端访问量占比</h3>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartTerminalPie"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>分端核心指标对比</h3>
+      <div style="margin-top:8px">
+        <table>
+          <tr><th>指标</th><th class="num">巨商汇APP</th><th class="num">巨商汇PC端</th></tr>
+          <tr><td>访问量</td><td class="num">1,485</td><td class="num">86</td></tr>
+          <tr><td>访问量占比</td><td class="pct">94.5%</td><td class="pct">5.5%</td></tr>
+          <tr><td>独立门店数</td><td class="num">197</td><td class="num">26</td></tr>
+          <tr><td>独立访问用户</td><td class="num">208</td><td class="num">27</td></tr>
+          <tr><td>独立登录用户</td><td class="num">48</td><td class="num">6</td></tr>
+          <tr><td>人均访问量</td><td class="num">7.1</td><td class="num">3.2</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 二、功能节点分析 -->
+<div class="section">
+  <div class="section-title">二、功能节点分析</div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>各功能节点访问量分布</h3>
+      <div class="chart-wrap" style="height:280px"><canvas id="chartFuncBar"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>各功能节点独立门店数</h3>
+      <div class="chart-wrap" style="height:280px"><canvas id="chartFuncStore"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- 三、分端x功能节点交叉 -->
+<div class="section">
+  <div class="section-title">三、分端x功能节点交叉分析</div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>分端功能节点访问量堆叠对比</h3>
+      <div class="chart-wrap" style="height:280px"><canvas id="chartTFStack"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>分端功能节点门店覆盖数</h3>
+      <div class="chart-wrap" style="height:280px"><canvas id="chartTFStoreStack"></canvas></div>
+    </div>
+</div>
+
+<!-- 四、门店类型分析 -->
+<div class="section">
+  <div class="section-title">四、门店类型分析</div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>门店类型访问量分布（Top10）</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="chartTypeBar"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>门店类型独立门店数分布（Top10）</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="chartTypeStore"></canvas></div>
+    </div>
+</div>
+
+<!-- 五、门店使用排名 -->
+<div class="section">
+  <div class="section-title">五、门店使用排名</div>
+  <div style="background:rgba(234,88,12,0.06);border:1px solid rgba(234,88,12,0.2);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:13px;color:#ea580c;line-height:1.6;">
+    【我的用户】作为默认落地页，受banner等通知影响，被动点击不等于主动使用，故剔除"我的用户"落地页后进行分析
+  </div>
+
+  <!-- 分级汇总 -->
+  <div class="tier-summary">
+    <div class="tier-card"><div class="tv tier-deep">5</div><div class="tl">深度使用</div><div class="td" style="color:var(--accent3)">业务操作≥20次 且 功能≥3个</div></div>
+    <div class="tier-card"><div class="tv tier-active">15</div><div class="tl">活跃使用</div><div class="td" style="color:var(--accent)">业务操作≥5次 且 功能≥2个</div></div>
+    <div class="tier-card"><div class="tv tier-light">78</div><div class="tl">轻度使用</div><div class="td" style="color:var(--accent4)">业务操作≥2次</div></div>
+    <div class="tier-card"><div class="tv tier-passive">120</div><div class="tl">仅浏览</div><div class="td" style="color:var(--text-muted)">业务操作≤1次</div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="rank-filters" id="rankFilters">
+      <button class="rank-filter-btn active" data-tier="all">全部 (218)</button>
+      <button class="rank-filter-btn" data-tier="深度使用">深度使用 (5)</button>
+      <button class="rank-filter-btn" data-tier="活跃使用">活跃使用 (15)</button>
+      <button class="rank-filter-btn" data-tier="轻度使用">轻度使用 (78)</button>
+      <button class="rank-filter-btn" data-tier="仅浏览">仅浏览 (120)</button>
+      <input type="text" class="rank-search" id="rankSearch" placeholder="搜索门店名称...">
+    </div>
+    <div class="rank-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px">排名</th>
+            <th>门店名称</th>
+            <th style="width:90px">门店编码</th>
+            <th>门店类型</th>
+            <th class="num" style="width:70px">总访问</th>
+            <th class="num" style="width:70px">业务操作</th>
+            <th class="num" style="width:60px">功能数</th>
+            <th class="num" style="width:60px">用户数</th>
+            <th class="num" style="width:60px">人均</th>
+            <th style="width:60px">使用分级</th>
+            <th>主要使用功能</th>
+          </tr>
+        </thead>
+        <tbody id="rankTbody"></tbody>
+      </table>
+    </div>
+    <div class="rank-pagination" id="rankPagination"></div>
+  </div>
+</div>
+
+<!-- 六、双端使用分析 -->
+<div class="section">
+  <div class="section-title">六、双端使用分析（巨商汇端 × 定制平台端）</div>
+  <div style="background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.15);border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:#64748b;line-height:1.7;">
+    巨商汇端：巨商汇APP + 巨商汇PC端 &nbsp;|&nbsp; 定制平台端：定制平台2.0PC端 + 三翼鸟工作台APP &nbsp;|&nbsp; 门店只要同时使用了两个大端口之一即视为双端使用
+  </div>
+
+  <!-- 概况 KPI -->
+  <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+    <div class="kpi-card blue"><div class="val" style="font-size:24px">218</div><div class="label">巨商汇端门店数</div></div>
+    <div class="kpi-card" style="border-color:rgba(124,58,237,0.3)"><div class="val" style="font-size:24px;color:#7c3aed">1,396</div><div class="label">定制平台端门店数</div></div>
+    <div class="kpi-card" style="border-color:rgba(5,150,105,0.3)"><div class="val" style="font-size:24px;color:#059669">36</div><div class="label">双端使用门店数</div></div>
+    <div class="kpi-card"><div class="val" style="font-size:24px;color:#ea580c">182</div><div class="label">仅用巨商汇端门店数</div></div>
+  </div>
+
+  <!-- 双端门店明细表 -->
+  <div class="chart-card">
+    <h3>36家双端门店明细</h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:30px">序号</th>
+            <th>门店名称</th>
+            <th>门店类型</th>
+            <th style="width:100px">巨商汇端</th>
+            <th style="width:140px">定制平台端</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">1</td><td>上善美居西美店</td><td>三翼鸟全案店</td><td>APP</td><td>工作台APP+PC端</td></tr>
+          <tr><td class="num">2</td><td>上饶市发波电器有限公司</td><td>区县海尔专卖店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">3</td><td>兰州小微张掖市名豪家电海尔城市旗舰店</td><td>海尔城市旗舰店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">4</td><td>南阳海亿鑫工程有限公司</td><td>产品专卖店(空调)</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">5</td><td><strong>吉安三翼鸟智慧智能科技有限公司</strong></td><td>三翼鸟全案店</td><td>APP+PC端</td><td>工作台APP+PC端</td></tr>
+          <tr><td class="num">6</td><td>吴江市今泽电器有限公司</td><td>海尔城市旗舰店</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">7</td><td>太原市鑫元商贸有限公司</td><td>卡萨帝城市体验中心</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">8</td><td>宜昌顺川电器销售有限公司</td><td>区县海尔专卖店</td><td>APP</td><td>工作台APP</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="text-align:center;margin-top:8px;">
+      <button id="toggleDualMore" onclick="document.getElementById('dualMore').style.display=document.getElementById('dualMore').style.display==='none'?'':'none';this.textContent=this.textContent==='展开剩余28家 ▼'?'收起 ▲':'展开剩余28家 ▼'" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:12px;cursor:pointer;">展开剩余28家 ▼</button>
+    </div>
+    <div id="dualMore" style="display:none;overflow-x:auto">
+      <table>
+        <thead><tr><th style="width:30px">序号</th><th>门店名称</th><th>门店类型</th><th style="width:100px">巨商汇端</th><th style="width:140px">定制平台端</th></tr></thead>
+        <tbody>
+          <tr><td class="num">9</td><td>宝鸡海丰商贸高新智家店</td><td>海尔城市旗舰店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">10</td><td>平凉市三友电器有限责任公司</td><td>海尔城市旗舰店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">11</td><td>开封居然之家米美分洗养护场景店</td><td>产品专卖店(冰洗)</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">12</td><td>开封米美居然三翼鸟新店</td><td>三翼鸟全案店</td><td>APP</td><td>工作台APP+PC端</td></tr>
+          <tr><td class="num">13</td><td>日照星瑞家用电器三翼鸟店</td><td>区县海尔专卖店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">14</td><td>枝江安娅商贸有限公司三翼鸟全案店</td><td>三翼鸟全案店</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">15</td><td><strong>武汉传承动力环保科技有限公司</strong></td><td>三翼鸟全案店</td><td>APP</td><td>工作台APP+PC端</td></tr>
+          <tr><td class="num">16</td><td>汇通北四居然卡萨帝体验店</td><td>卡萨帝城市旗舰店</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">17</td><td>河南万宝股份有限公司</td><td>海尔综合店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">18</td><td>河南海一东欧卡萨帝店</td><td>卡萨帝城市旗舰店</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">19</td><td>河南海成惠济万达二楼店</td><td>卡萨帝城市旗舰店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">20</td><td>河南海成红星美凯龙店</td><td>卡萨帝城市旗舰店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">21</td><td>海成北龙湖三翼鸟店</td><td>海尔城市旗舰店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">22</td><td>湖北骏昌商贸(颐阳路海尔专卖店)</td><td>海尔城市旗舰店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">23</td><td>璧山红星美凯龙卡萨帝旗舰店</td><td>三翼鸟全案店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">24</td><td>程顺商水海尔智家旗舰店</td><td>区县海尔专卖店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">25</td><td>襄阳森海电器有限公司</td><td>区县海尔专卖店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">26</td><td>西安雷廷三翼鸟城市体验中心</td><td>三翼鸟城市体验中心</td><td>APP</td><td>工作台APP+PC端</td></tr>
+          <tr><td class="num">27</td><td>西安雷廷南大卡萨帝旗舰店</td><td>卡萨帝城市旗舰店</td><td>APP</td><td>工作台APP+PC端</td></tr>
+          <tr><td class="num">28</td><td>贵州霓丰商贸有限公司</td><td>区县海尔专卖店</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">29</td><td>鄂州市南浦路海创电器经营部</td><td>产品专营店(水联网)</td><td>PC端</td><td>工作台APP</td></tr>
+          <tr><td class="num">30</td><td>铜仁市欣海乐碧江区滨江店</td><td>三翼鸟全案店</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">31</td><td>锡山红星三翼鸟001号店</td><td>卡萨帝城市旗舰店</td><td>APP</td><td>工作台APP+PC端</td></tr>
+          <tr><td class="num">32</td><td>防城港市鼎好电器有限公司</td><td>海尔城市旗舰店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">33</td><td>阿克苏酣亲商贸有限公司</td><td>三翼鸟全案店</td><td>PC端</td><td>PC端</td></tr>
+          <tr><td class="num">34</td><td>陕西圣邦壹铭商贸三森店</td><td>区县海尔专卖店</td><td>APP</td><td>PC端</td></tr>
+          <tr><td class="num">35</td><td>鞍山华轩商贸有限公司</td><td>海尔综合店</td><td>APP</td><td>工作台APP</td></tr>
+          <tr><td class="num">36</td><td>驻马店永晟盘龙山路三翼鸟店</td><td>三翼鸟全案店</td><td>APP</td><td>PC端</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 以下内容由脚本注入：迁移分析板块 -->
+<!-- INJECT_MIGRATION_START -->
+<!-- 七、门店迁移分析 -->
+<div class="section">
+  <div class="section-title">七、门店迁移分析（巨商汇上线前后对比）</div>
+  <div style="background:rgba(5,150,105,0.05);border:1px solid rgba(5,150,105,0.15);border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:12px;color:#64748b;line-height:1.7;">
+    历史期（3.27-4.28）：仅三翼鸟工作台APP + 定制平台2.0PC端 &nbsp;|&nbsp; 4.28后：新增巨商汇APP + 巨商汇PC端 &nbsp;|&nbsp; 巨商汇端共218家门店（已剔除测试）
+  </div>
+  <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+    <div class="kpi-card" style="border-color:rgba(37,99,235,0.3)"><div class="val" style="font-size:24px;color:#2563eb">174</div><div class="label">新增门店（上线后首次使用）</div></div>
+    <div class="kpi-card" style="border-color:rgba(234,88,12,0.3)"><div class="val" style="font-size:24px;color:#ea580c">19</div><div class="label">完全迁移（放弃定制平台）</div></div>
+    <div class="kpi-card" style="border-color:rgba(124,58,237,0.3)"><div class="val" style="font-size:24px;color:#7c3aed">25</div><div class="label">双端并存（两端都在用）</div></div>
+    <div class="kpi-card"><div class="val" style="font-size:24px;color:var(--danger)">79.8%</div><div class="label">新增门店占巨商汇端比例</div></div>
+  </div>
+
+  <div class="chart-card">
+    <div class="rank-filters" id="migFilters">
+      <button class="rank-filter-btn active" data-cat="all">全部 (218)</button>
+      <button class="rank-filter-btn" data-cat="新增门店">新增门店 (174)</button>
+      <button class="rank-filter-btn" data-cat="完全迁移">完全迁移 (19)</button>
+      <button class="rank-filter-btn" data-cat="双端并存">双端并存 (25)</button>
+      <input type="text" class="rank-search" id="migSearch" placeholder="搜索门店名称...">
+    </div>
+    <div class="rank-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px">序号</th>
+            <th>门店名称</th>
+            <th>门店类型</th>
+            <th class="num" style="width:70px">业务操作</th>
+            <th class="num" style="width:60px">功能数</th>
+            <th class="num" style="width:60px">用户数</th>
+            <th class="num" style="width:55px">人均</th>
+            <th style="width:60px">使用分级</th>
+            <th>迁移分类</th>
+            <th>主要使用功能</th>
+          </tr>
+        </thead>
+        <tbody id="migTbody"></tbody>
+      </table>
+    </div>
+    <div class="rank-pagination" id="migPagination"></div>
+  </div>
+
+  <div style="background:rgba(5,150,105,0.05);border:1px solid rgba(5,150,105,0.15);border-radius:8px;padding:10px 16px;margin-top:12px;font-size:12px;color:#64748b;line-height:1.7;">
+    <strong style="color:var(--accent3)">关键发现</strong>：双端并存门店巨商汇端使用深度最高（深度+活跃68%），迁移门店次之（47.4%），新增门店最低（32.8%）。有定制平台使用习惯的门店迁移到巨商汇后更容易形成深度使用；纯新增门店大部分仍处于轻度使用阶段。
+  </div>
+</div>
+<!-- INJECT_MIGRATION_END -->
+
+<!-- 八、小微区域分布 -->
+<div class="section">
+  <div class="section-title">八、小微区域分布（Top15）</div>
+  <div class="chart-card">
+    <h3>各区域访问量分布</h3>
+    <div class="chart-wrap" style="height:240px"><canvas id="chartRegion"></canvas></div>
+  </div>
+</div>
+
+<!-- 八、PC端使用深度 -->
+<div class="section">
+  <div class="section-title">九、PC端使用深度分析</div>
+  <div class="grid-2">
+    <div class="chart-card">
+      <h3>PC端功能节点分布</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="chartPCFunc"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>PC端特征摘要</h3>
+      <div style="margin-top:12px; font-size:13px; color:var(--text-muted); line-height:2">
+        <div>PC端仅覆盖 <strong style="color:var(--accent2)">26家门店</strong>（APP的13.2%）</div>
+        <div>主要功能集中在 <strong style="color:var(--accent2)">跟进商机</strong>（86.0%）、<strong style="color:var(--accent2)">新建用户</strong>和 <strong style="color:var(--accent2)">分配商机</strong></div>
+        <div>我的用户、商机搜索、交付信息等8个功能 <strong style="color:var(--danger)">PC端零使用</strong></div>
+        <div>PC端门店人均访问 <strong style="color:var(--accent2)">3.3次</strong>（APP为7.5次）</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = {
+  app: 'rgba(37,99,235,0.85)', pc: 'rgba(124,58,237,0.85)',
+  green: 'rgba(5,150,105,0.85)', orange: 'rgba(234,88,12,0.85)',
+  palette: ['#2563eb','#7c3aed','#059669','#ea580c','#dc2626','#a855f7','#d97706','#0891b2','#c026d3','#16a34a','#e11d48','#0d9488']
+};
+Chart.defaults.color = '#64748b';
+Chart.defaults.borderColor = 'rgba(0,0,0,0.06)';
+Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif";
+
+const total = 1571;
+
+// 1. 分端饼图
+new Chart(document.getElementById('chartTerminalPie'), {
+  type: 'doughnut',
+  data: {
+    labels: ['巨商汇APP', '巨商汇PC端'],
+    datasets: [{ data: [1485, 86], backgroundColor: [COLORS.app, COLORS.pc], borderWidth: 0, hoverOffset: 8 }]
+  },
+  options: {
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyleWidth: 12, font: { size: 13 } } },
+      tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed.toLocaleString() + ' (' + (ctx.parsed/total*100).toFixed(1) + '%)' } }
+    }
+  }
+});
+
+// 2. 功能节点访问量
+const funcLabels = ['跟进商机','我的用户','新建用户','商机搜索','添加协作人/设计师','分配商机','交付信息','签约','方案设计报价','量尺','订单物流'];
+const funcValues = [667,623,119,71,40,14,11,11,8,6,1];
+new Chart(document.getElementById('chartFuncBar'), {
+  type: 'bar',
+  data: { labels: funcLabels, datasets: [{ data: funcValues, backgroundColor: COLORS.palette, borderRadius: 4, borderSkipped: false }] },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.x.toLocaleString() } } },
+    scales: { x: { grid: { display: false } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
+  }
+});
+
+// 3. 功能节点门店数
+const funcStoreVals = [79,184,50,59,25,13,5,6,5,2,1];
+new Chart(document.getElementById('chartFuncStore'), {
+  type: 'bar',
+  data: { labels: funcLabels, datasets: [{ data: funcStoreVals, backgroundColor: COLORS.green, borderRadius: 4, borderSkipped: false }] },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.x + '家门店' } } },
+    scales: { x: { grid: { display: false }, title: { display: true, text: '门店数', color: '#64748b' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
+  }
+});
+
+// 4. 分端功能堆叠
+new Chart(document.getElementById('chartTFStack'), {
+  type: 'bar',
+  data: {
+    labels: funcLabels,
+    datasets: [
+      { label: '巨商汇APP', data: [593,623,116,71,36,9,11,11,8,6,1], backgroundColor: COLORS.app, borderRadius: 2 },
+      { label: '巨商汇PC端', data: [74,0,3,0,4,5,0,0,0,0,0], backgroundColor: COLORS.pc, borderRadius: 2 }
+    ]
+  },
+  options: {
+    plugins: { legend: { position: 'top', labels: { usePointStyle: true, pointStyleWidth: 10, font: { size: 12 } } } },
+    scales: { x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } }, y: { stacked: true, grid: { color: 'rgba(0,0,0,0.04)' } } }
+  }
+});
+
+// 5. 分端功能门店覆盖
+new Chart(document.getElementById('chartTFStoreStack'), {
+  type: 'bar',
+  data: {
+    labels: funcLabels,
+    datasets: [
+      { label: 'APP门店', data: [63,184,47,59,22,9,5,6,5,2,1], backgroundColor: COLORS.app, borderRadius: 2 },
+      { label: 'PC门店', data: [20,0,3,0,3,4,0,0,0,0,0], backgroundColor: COLORS.pc, borderRadius: 2 }
+    ]
+  },
+  options: {
+    plugins: { legend: { position: 'top', labels: { usePointStyle: true, pointStyleWidth: 10, font: { size: 12 } } } },
+    scales: { x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } }, y: { stacked: true, grid: { color: 'rgba(0,0,0,0.04)' }, title: { display: true, text: '门店数', color: '#64748b' } } }
+  }
+});
+
+// 6. 门店类型访问量
+const typeLabels = ['三翼鸟全案店','区县海尔专卖店','海尔城市旗舰店','乡镇海尔专卖店','产品专卖店(空调)','海尔综合店','产品专卖店(冰洗)','卡萨帝城市旗舰店','三翼鸟体验中心','产品专卖店(净水)'];
+const typeVals = [422,340,230,159,71,66,62,58,45,30];
+new Chart(document.getElementById('chartTypeBar'), {
+  type: 'bar',
+  data: { labels: typeLabels, datasets: [{ data: typeVals, backgroundColor: COLORS.palette, borderRadius: 4, borderSkipped: false }] },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.x.toLocaleString() } } },
+    scales: { x: { grid: { display: false } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
+  }
+});
+
+// 7. 门店类型独立门店数（按门店数从大到小排列）
+const typeStoreVals = [10,59,32,32,16,20,11,12,2,1];
+const typeStorePairs = typeLabels.map((l,i) => [l, typeStoreVals[i]]).sort((a,b) => b[1]-a[1]);
+const typeStoreLabels = typeStorePairs.map(p=>p[0]);
+const typeStoreSorted = typeStorePairs.map(p=>p[1]);
+new Chart(document.getElementById('chartTypeStore'), {
+  type: 'bar',
+  data: { labels: typeStoreLabels, datasets: [{ data: typeStoreSorted, backgroundColor: COLORS.orange, borderRadius: 4, borderSkipped: false }] },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.x + '家门店' } } },
+    scales: { x: { grid: { display: false }, title: { display: true, text: '门店数', color: '#64748b' } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
+  }
+});
+
+// 8. 区域分布
+const regionLabels = ['郑州','武汉','西安','太原','贵州','合肥','南昌','长沙','天津','石家庄','重庆','无锡','北京','青岛','南宁'];
+const regionVals = [469,169,123,101,100,58,51,46,44,44,32,28,28,27,27];
+new Chart(document.getElementById('chartRegion'), {
+  type: 'bar',
+  data: {
+    labels: regionLabels,
+    datasets: [{ data: regionVals, backgroundColor: ctx => ctx.index === 0 ? 'rgba(37,99,235,0.9)' : ctx.index < 3 ? 'rgba(124,58,237,0.7)' : 'rgba(0,0,0,0.08)', borderRadius: 4, borderSkipped: false }]
+  },
+  options: {
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y.toLocaleString() } } },
+    scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { grid: { color: 'rgba(0,0,0,0.04)' } } }
+  }
+});
+
+// 9. PC端功能
+const pcFuncLabels = ['跟进商机','新建用户','分配商机','添加协作人/设计师'];
+const pcFuncVals = [74,3,5,4];
+new Chart(document.getElementById('chartPCFunc'), {
+  type: 'doughnut',
+  data: {
+    labels: pcFuncLabels,
+    datasets: [{ data: pcFuncVals, backgroundColor: [COLORS.pc, COLORS.app, COLORS.green, COLORS.orange], borderWidth: 0, hoverOffset: 6 }]
+  },
+  options: {
+    cutout: '55%',
+    plugins: {
+      legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, font: { size: 11 } } },
+      tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + ' (' + (ctx.parsed/86*100).toFixed(1) + '%)' } }
+    }
+  }
+});
+
+// ===== 七、门店使用排名表格 =====
+const STORE_DATA = [{"r": 1, "n": "驻马店永晟盘龙山路三翼鸟店", "c": "8800589574", "t": "三翼鸟全案店", "x": "郑州", "v": 144, "u": 3, "av": 48.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 90], ["我的用户", 40], ["交付信息", 4], ["新建用户", 4], ["添加协作人及设计师", 3], ["签约（录合同）", 2], ["方案设计报价", 1]], "bt": 99, "bn": 4, "tier": "深度使用"}, {"r": 2, "n": "武汉传承动力环保科技有限公司(青山居然之家店)", "c": "8800575357", "t": "三翼鸟全案店", "x": "武汉", "v": 95, "u": 1, "av": 95.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 52], ["我的用户", 16], ["量尺", 5], ["签约（录合同）", 5], ["方案设计报价", 4], ["交付信息", 4], ["添加协作人及设计师", 4], ["商机搜索", 3], ["新建用户", 1], ["订单物流信息", 1]], "bt": 70, "bn": 7, "tier": "深度使用"}, {"r": 3, "n": "开封米美居然三翼鸟新店", "c": "8800563249", "t": "三翼鸟全案店", "x": "郑州", "v": 93, "u": 2, "av": 46.5, "tm": ["巨商汇APP"], "f": [["跟进商机", 51], ["我的用户", 31], ["新建用户", 7], ["交付信息", 1], ["方案设计报价", 1], ["签约（录合同）", 1], ["量尺", 1]], "bt": 61, "bn": 5, "tier": "深度使用"}, {"r": 4, "n": "郑州小微开封米美顺河区专卖店", "c": "8800436404", "t": "区县海尔专卖店", "x": "郑州", "v": 75, "u": 1, "av": 75.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 42], ["我的用户", 20], ["新建用户", 5], ["添加协作人及设计师", 5], ["交付信息", 1], ["方案设计报价", 1], ["签约（录合同）", 1]], "bt": 49, "bn": 4, "tier": "深度使用"}, {"r": 5, "n": "屯留县利人商贸有限公司", "c": "8700038249", "t": "海尔城市旗舰店", "x": "太原", "v": 58, "u": 3, "av": 19.3, "tm": ["巨商汇APP", "巨商汇PC端"], "f": [["跟进商机", 30], ["我的用户", 20], ["商机搜索", 5], ["新建用户", 3]], "bt": 38, "bn": 3, "tier": "深度使用"}, {"r": 6, "n": "铜仁市欣海乐碧江区滨江店", "c": "8800566909", "t": "三翼鸟全案店", "x": "贵州", "v": 41, "u": 1, "av": 41.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 21], ["我的用户", 14], ["添加协作人及设计师", 3], ["新建用户", 2], ["签约（录合同）", 1]], "bt": 23, "bn": 2, "tier": "活跃使用"}, {"r": 7, "n": "西安雷廷三翼鸟城市体验中心", "c": "8800529865", "t": "三翼鸟城市体验中心", "x": "西安", "v": 35, "u": 1, "av": 35.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 20], ["我的用户", 10], ["新建用户", 3], ["添加协作人及设计师", 2]], "bt": 23, "bn": 2, "tier": "活跃使用"}, {"r": 8, "n": "六安龙翼电器有限公司", "c": "8800550215", "t": "海尔产品专卖店(净水)", "x": "合肥", "v": 30, "u": 1, "av": 30.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 26], ["我的用户", 4]], "bt": 26, "bn": 1, "tier": "轻度使用"}, {"r": 9, "n": "安龙县诚信电器家私商城", "c": "8800526112", "t": "乡镇海尔专卖店", "x": "贵州", "v": 30, "u": 1, "av": 30.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 22], ["我的用户", 4], ["新建用户", 3], ["添加协作人及设计师", 1]], "bt": 25, "bn": 2, "tier": "活跃使用"}, {"r": 10, "n": "唐山隆云暖通设备有限公司", "c": "8800397496", "t": "海尔产品专卖店(中央空调)", "x": "天津", "v": 28, "u": 1, "av": 28.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 16], ["我的用户", 10], ["交付信息", 1], ["添加协作人及设计师", 1]], "bt": 17, "bn": 2, "tier": "活跃使用"}, {"r": 11, "n": "娄底市惠尔圣电器有限公司洞新分店", "c": "8800173088", "t": "海尔城市旗舰店", "x": "长沙", "v": 27, "u": 2, "av": 13.5, "tm": ["巨商汇APP"], "f": [["跟进商机", 15], ["我的用户", 10], ["添加协作人及设计师", 2]], "bt": 15, "bn": 1, "tier": "轻度使用"}, {"r": 12, "n": "开封居然之家米美分洗养护场景店", "c": "8800599105", "t": "海尔产品专卖店(冰洗)", "x": "郑州", "v": 22, "u": 1, "av": 22.0, "tm": ["巨商汇APP"], "f": [["我的用户", 10], ["跟进商机", 9], ["新建用户", 3]], "bt": 12, "bn": 2, "tier": "活跃使用"}, {"r": 13, "n": "平凉市三友电器有限责任公司", "c": "8800102056", "t": "海尔城市旗舰店", "x": "兰州", "v": 19, "u": 1, "av": 19.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 12], ["我的用户", 6], ["分配商机", 1]], "bt": 13, "bn": 2, "tier": "活跃使用"}, {"r": 14, "n": "兰考县智家商贸有限公司", "c": "8800403614", "t": "区县海尔专卖店", "x": "郑州", "v": 16, "u": 1, "av": 16.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 12], ["我的用户", 4]], "bt": 12, "bn": 1, "tier": "轻度使用"}, {"r": 15, "n": "昆明海卡家电有限公司", "c": "8800308761", "t": "海尔城市旗舰店", "x": "昆明", "v": 16, "u": 2, "av": 8.0, "tm": ["巨商汇APP"], "f": [["我的用户", 6], ["跟进商机", 6], ["新建用户", 3], ["添加协作人及设计师", 1]], "bt": 9, "bn": 2, "tier": "活跃使用"}, {"r": 16, "n": "武汉海日新商贸有限公司(汉西红星美凯龙)", "c": "8800236322", "t": "海尔城市旗舰店", "x": "武汉", "v": 15, "u": 2, "av": 7.5, "tm": ["巨商汇APP"], "f": [["跟进商机", 8], ["我的用户", 5], ["添加协作人及设计师", 2]], "bt": 8, "bn": 1, "tier": "轻度使用"}, {"r": 17, "n": "河南海成惠济万达二楼店", "c": "8800415228", "t": "卡萨帝城市旗舰店", "x": "郑州", "v": 15, "u": 1, "av": 15.0, "tm": ["巨商汇APP"], "f": [["我的用户", 6], ["新建用户", 6], ["跟进商机", 3]], "bt": 9, "bn": 2, "tier": "活跃使用"}, {"r": 18, "n": "吉安三翼鸟智慧智能科技有限公司", "c": "8800650162", "t": "三翼鸟全案店", "x": "南昌", "v": 14, "u": 2, "av": 7.0, "tm": ["巨商汇APP", "巨商汇PC端"], "f": [["跟进商机", 10], ["我的用户", 4]], "bt": 10, "bn": 1, "tier": "轻度使用"}, {"r": 19, "n": "宝鸡海丰商贸有限公司", "c": "8800163332", "t": "区县海尔专卖店", "x": "西安", "v": 14, "u": 2, "av": 7.0, "tm": ["巨商汇APP", "巨商汇PC端"], "f": [["跟进商机", 10], ["我的用户", 4]], "bt": 10, "bn": 1, "tier": "轻度使用"}, {"r": 20, "n": "上善美居西美店", "c": "8800410344", "t": "三翼鸟全案店", "x": "石家庄", "v": 14, "u": 1, "av": 14.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 7], ["我的用户", 6], ["添加协作人及设计师", 1]], "bt": 7, "bn": 1, "tier": "轻度使用"}, {"r": 21, "n": "宜昌顺川电器销售有限公司(星河水岸海尔专卖店)", "c": "8800570005", "t": "区县海尔专卖店", "x": "武汉", "v": 14, "u": 1, "av": 14.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 8], ["我的用户", 6]], "bt": 8, "bn": 1, "tier": "轻度使用"}, {"r": 22, "n": "广西蓝海家电销售有限公司", "c": "8800310646", "t": "区县海尔专卖店", "x": "南宁", "v": 14, "u": 1, "av": 14.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 7], ["我的用户", 4], ["方案设计报价", 1], ["签约（录合同）", 1], ["添加协作人及设计师", 1]], "bt": 8, "bn": 2, "tier": "活跃使用"}, {"r": 23, "n": "沈阳海骏机电设备有限公司", "c": "8800100527", "t": "海尔产品专卖店(空调)", "x": "沈阳", "v": 13, "u": 1, "av": 13.0, "tm": ["巨商汇APP"], "f": [["我的用户", 6], ["跟进商机", 6], ["新建用户", 1]], "bt": 7, "bn": 2, "tier": "活跃使用"}, {"r": 24, "n": "枝江安娅商贸有限公司(欧亚达三翼鸟全案店)", "c": "8800587662", "t": "三翼鸟全案店", "x": "武汉", "v": 12, "u": 1, "av": 12.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 6], ["我的用户", 4], ["新建用户", 2]], "bt": 8, "bn": 2, "tier": "活跃使用"}, {"r": 25, "n": "如皋市吴窑海尔专卖店", "c": "8800182636", "t": "乡镇海尔专卖店", "x": "无锡", "v": 11, "u": 1, "av": 11.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 5], ["我的用户", 4], ["分配商机", 1], ["添加协作人及设计师", 1]], "bt": 6, "bn": 2, "tier": "活跃使用"}, {"r": 26, "n": "邯郸市永年区天顺经贸有限公司", "c": "8800015396", "t": "乡镇海尔专卖店", "x": "石家庄", "v": 10, "u": 2, "av": 5.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 10]], "bt": 10, "bn": 1, "tier": "轻度使用"}, {"r": 27, "n": "连云港智鑫达东海水晶公园海尔智家店", "c": "8800524570", "t": "区县海尔专卖店", "x": "南京", "v": 10, "u": 1, "av": 10.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 8], ["我的用户", 2]], "bt": 8, "bn": 1, "tier": "轻度使用"}, {"r": 28, "n": "咸阳金瑞海商贸有限公司", "c": "8800436629", "t": "海尔城市旗舰店", "x": "西安", "v": 10, "u": 2, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 5], ["我的用户", 4], ["商机搜索", 1]], "bt": 6, "bn": 2, "tier": "活跃使用"}, {"r": 29, "n": "河南海成红星美凯龙店", "c": "8800330551", "t": "卡萨帝城市旗舰店", "x": "郑州", "v": 10, "u": 2, "av": 5.0, "tm": ["巨商汇APP"], "f": [["新建用户", 6], ["我的用户", 4]], "bt": 6, "bn": 1, "tier": "轻度使用"}, {"r": 30, "n": "程顺商水海尔智家旗舰店", "c": "8800453087", "t": "区县海尔专卖店", "x": "郑州", "v": 10, "u": 1, "av": 10.0, "tm": ["巨商汇APP"], "f": [["新建用户", 6], ["我的用户", 4]], "bt": 6, "bn": 1, "tier": "轻度使用"}, {"r": 31, "n": "河南海成三翼鸟城市体验中心", "c": "8800613683", "t": "三翼鸟城市体验中心", "x": "郑州", "v": 10, "u": 1, "av": 10.0, "tm": ["巨商汇APP"], "f": [["新建用户", 6], ["我的用户", 4]], "bt": 6, "bn": 1, "tier": "轻度使用"}, {"r": 32, "n": "襄阳森海电器有限公司", "c": "8800532535", "t": "区县海尔专卖店", "x": "武汉", "v": 10, "u": 1, "av": 10.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 5], ["我的用户", 4], ["添加协作人及设计师", 1]], "bt": 5, "bn": 1, "tier": "轻度使用"}, {"r": 33, "n": "邵东市博诚电器销售有限公司家电城店", "c": "8800244626", "t": "区县海尔专卖店", "x": "长沙", "v": 9, "u": 1, "av": 9.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 9]], "bt": 9, "bn": 1, "tier": "轻度使用"}, {"r": 34, "n": "阜南县王堰镇家用电器经营维修部", "c": "8800489567", "t": "乡镇海尔专卖店", "x": "合肥", "v": 9, "u": 1, "av": 9.0, "tm": ["巨商汇APP"], "f": [["我的用户", 6], ["商机搜索", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 35, "n": "志联于都海尔专卖店", "c": "8800347090", "t": "区县海尔专卖店", "x": "南昌", "v": 8, "u": 2, "av": 4.0, "tm": ["巨商汇APP", "巨商汇PC端"], "f": [["跟进商机", 4], ["我的用户", 3], ["添加协作人及设计师", 1]], "bt": 4, "bn": 1, "tier": "轻度使用"}, {"r": 36, "n": "日照星瑞家用电器有限公司三翼鸟店", "c": "8800454874", "t": "区县海尔专卖店", "x": "青岛", "v": 8, "u": 1, "av": 8.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["跟进商机", 3], ["新建用户", 1]], "bt": 4, "bn": 2, "tier": "轻度使用"}, {"r": 37, "n": "通榆县洪石联赢电器有限责任公司", "c": "8800290649", "t": "乡镇海尔专卖店", "x": "长春", "v": 8, "u": 1, "av": 8.0, "tm": ["巨商汇APP"], "f": [["我的用户", 6], ["新建用户", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 38, "n": "陕西宸海宏博智家店", "c": "8800524832", "t": "海尔城市旗舰店", "x": "西安", "v": 8, "u": 1, "av": 8.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 5], ["我的用户", 2], ["新建用户", 1]], "bt": 6, "bn": 2, "tier": "活跃使用"}, {"r": 39, "n": "昆山商之都电器设备有限公司", "c": "8800278827", "t": "海尔产品专卖店(厨电)", "x": "无锡", "v": 8, "u": 1, "av": 8.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["跟进商机", 3], ["商机搜索", 1]], "bt": 4, "bn": 2, "tier": "轻度使用"}, {"r": 40, "n": "唐山市古冶区晓辉电器店(个体工商户)", "c": "8800616297", "t": "海尔产品专卖店(冰洗)", "x": "天津", "v": 8, "u": 1, "av": 8.0, "tm": ["巨商汇APP"], "f": [["我的用户", 6], ["新建用户", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 41, "n": "佛山市琦能电器有限公司", "c": "8800333951", "t": "海尔产品专卖店(空调)", "x": "广州", "v": 8, "u": 2, "av": 4.0, "tm": ["巨商汇APP", "巨商汇PC端"], "f": [["跟进商机", 6], ["我的用户", 2]], "bt": 6, "bn": 1, "tier": "轻度使用"}, {"r": 42, "n": "合江县侨台鑫家电有限公司", "c": "8700014657", "t": "区县海尔专卖店", "x": "重庆", "v": 8, "u": 1, "av": 8.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["新建用户", 3], ["商机搜索", 1]], "bt": 4, "bn": 2, "tier": "轻度使用"}, {"r": 43, "n": "(南店)临泉县临武家电有限责任公司", "c": "8800130611", "t": "区县海尔专卖店", "x": "合肥", "v": 7, "u": 1, "av": 7.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 44, "n": "武陟县语彤家电营销部(个体工商户)", "c": "8800612679", "t": "乡镇海尔专卖店", "x": "郑州", "v": 7, "u": 1, "av": 7.0, "tm": ["巨商汇APP"], "f": [["我的用户", 6], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 45, "n": "北京中海聚诚科技有限公司", "c": "8800425877", "t": "海尔产品专卖店(空调)", "x": "北京", "v": 7, "u": 1, "av": 7.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 5], ["分配商机", 2]], "bt": 7, "bn": 2, "tier": "活跃使用"}, {"r": 46, "n": "内蒙古乌兰察布市凉城县信兴家电有限公司", "c": "8800584205", "t": "区县海尔专卖店", "x": "内蒙", "v": 7, "u": 1, "av": 7.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["新建用户", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 47, "n": "贵州省三都县集采贸易有限公司", "c": "8800620835", "t": "乡镇海尔专卖店", "x": "贵州", "v": 7, "u": 1, "av": 7.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["新建用户", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 48, "n": "内蒙古晗铄电器有限责任公司", "c": "8800570897", "t": "海尔产品专卖店(空调)", "x": "内蒙", "v": 6, "u": 1, "av": 6.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2], ["分配商机", 1]], "bt": 4, "bn": 2, "tier": "轻度使用"}, {"r": 49, "n": "三河市风驰电器销售有限公司", "c": "8800435357", "t": "海尔城市旗舰店", "x": "北京", "v": 6, "u": 1, "av": 6.0, "tm": ["巨商汇APP"], "f": [["我的用户", 3], ["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 50, "n": "湖北鸿基锐创贸易有限公司(汉阳红星美凯龙店)", "c": "8800391010", "t": "海尔城市旗舰店", "x": "武汉", "v": 6, "u": 1, "av": 6.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["商机搜索", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 51, "n": "梁平区亿发家电经营部(个体工商户)", "c": "8800668587", "t": "乡镇海尔专卖店", "x": "重庆", "v": 6, "u": 2, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["新建用户", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 52, "n": "吉安林玥水联网一号店", "c": "8800529797", "t": "海尔产品专营店(水联网)", "x": "南昌", "v": 6, "u": 1, "av": 6.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2], ["添加协作人及设计师", 1]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 53, "n": "阳城县旭东商贸有限公司", "c": "8700027595", "t": "海尔综合店", "x": "太原", "v": 6, "u": 1, "av": 6.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 4], ["我的用户", 2]], "bt": 4, "bn": 1, "tier": "轻度使用"}, {"r": 54, "n": "上海华克斯实业股份有限公司", "c": "8700026789", "t": "区县海尔专卖店", "x": "上海", "v": 6, "u": 1, "av": 6.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["商机搜索", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 55, "n": "南阳海亿鑫工程有限公司", "c": "8800633644", "t": "海尔产品专卖店(空调)", "x": "郑州", "v": 6, "u": 1, "av": 6.0, "tm": ["巨商汇APP"], "f": [["新建用户", 3], ["我的用户", 2], ["添加协作人及设计师", 1]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 56, "n": "六矿海尔空调专营店", "c": "8800267143", "t": "海尔产品专卖店(空调)", "x": "郑州", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 3], ["商机搜索", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 57, "n": "渭南易美易实商贸有限公司", "c": "8800615320", "t": "区县海尔专卖店", "x": "西安", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 58, "n": "南昌市泰昂贸易有限公司", "c": "8800320430", "t": "海尔综合店", "x": "南昌", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 59, "n": "开平市水口镇龙杰家用电器经营部(个体工商户)", "c": "8800625337", "t": "乡镇海尔专卖店", "x": "广州", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 60, "n": "东莞市宏海机电工程有限公司", "c": "8800568879", "t": "海尔产品专卖店(空调)", "x": "深圳", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 61, "n": "陕西众辉天驰商贸有限公司", "c": "8800532573", "t": "海尔产品专卖店(空调)", "x": "西安", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 5]], "bt": 5, "bn": 1, "tier": "轻度使用"}, {"r": 62, "n": "锡山红星三翼鸟001号店", "c": "8800435826", "t": "卡萨帝城市旗舰店", "x": "无锡", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 63, "n": "陕西海惠亿家电器有限公司冰冷体验店", "c": "8800349749", "t": "海尔产品专卖店(冰冷)", "x": "西安", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 64, "n": "普宁市云落宇晨建材经营部", "c": "8800608343", "t": "海尔产品专卖店(冰洗)", "x": "深圳", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 65, "n": "易县易通达商贸有限公司", "c": "8800444640", "t": "区县海尔专卖店", "x": "石家庄", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 3], ["商机搜索", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 66, "n": "西安雷廷南大卡萨帝旗舰店", "c": "8800613279", "t": "卡萨帝城市旗舰店", "x": "西安", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 67, "n": "太原市鑫元商贸有限公司", "c": "8800023483", "t": "海尔综合店", "x": "太原", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 68, "n": "西安银丰电器有限公司", "c": "8800103598", "t": "区县海尔专卖店", "x": "西安", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 69, "n": "榆林市金松商贸有限公司人民西路店", "c": "8800220378", "t": "海尔城市旗舰店", "x": "西安", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 70, "n": "河南海成生活家制冷场景融合店", "c": "8800500538", "t": "海尔产品专卖店(冰洗)", "x": "郑州", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["新建用户", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 71, "n": "海成北龙湖三翼鸟店", "c": "8800473102", "t": "海尔城市旗舰店", "x": "郑州", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["新建用户", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 72, "n": "崖头家电门市", "c": "8800148093", "t": "乡镇海尔专卖店", "x": "青岛", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 73, "n": "双加李治刚家电", "c": "8800494651", "t": "海尔产品专卖店(冰洗)", "x": "重庆", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["新建用户", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 74, "n": "梦琪华商海尔专卖店", "c": "8800643600", "t": "区县海尔专卖店", "x": "宁波", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 75, "n": "南京新森大润发邗江店", "c": "8800618010", "t": "海尔综合店", "x": "南京", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 76, "n": "广州市皓群电器有限公司白云店", "c": "8800624182", "t": "卡萨帝城市旗舰店", "x": "广州", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["新建用户", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 77, "n": "三原同乡恩泽家电经销部", "c": "8800323978", "t": "乡镇海尔专卖店", "x": "西安", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 78, "n": "仙桃万吉连环境科技有限公司(三翼鸟新华书店)", "c": "8800533099", "t": "区县海尔专卖店", "x": "武汉", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 79, "n": "上饶市发波电器有限公司", "c": "8800018247", "t": "区县海尔专卖店", "x": "南昌", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 80, "n": "获嘉海一嘉和三翼鸟店", "c": "8800450642", "t": "区县海尔专卖店", "x": "郑州", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2], ["添加协作人及设计师", 1]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 81, "n": "鞍山华轩商贸有限公司", "c": "8800538818", "t": "海尔综合店", "x": "沈阳", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["新建用户", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 82, "n": "日照凌云江豪旗舰店", "c": "8800525624", "t": "海尔综合店", "x": "青岛", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 83, "n": "临颍县鹏辉家电经营部", "c": "8800306455", "t": "乡镇海尔专卖店", "x": "郑州", "v": 5, "u": 1, "av": 5.0, "tm": ["巨商汇APP"], "f": [["新建用户", 3], ["我的用户", 2]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 84, "n": "山西恒宇翔科贸有限公司", "c": "8800110915", "t": "海尔城市旗舰店", "x": "太原", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 85, "n": "杭州弘邦电器有限公司", "c": "8800584582", "t": "海尔产品专卖店(空调)", "x": "杭州", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 86, "n": "彭泽县同信家电有限公司湖口店", "c": "8800214887", "t": "统帅综合店", "x": "南昌", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 87, "n": "山西晋昶商贸有限责任公司", "c": "8800368768", "t": "区县海尔专卖店", "x": "太原", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 88, "n": "赞皇县德裕商贸有限公司", "c": "8800216113", "t": "区县海尔专卖店", "x": "石家庄", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 89, "n": "伊犁博舟商贸有限公司(特克斯店)", "c": "8800346705", "t": "区县海尔专卖店", "x": "新疆", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 90, "n": "嵩县飞恒电器销售店", "c": "8800291130", "t": "区县海尔专卖店", "x": "郑州", "v": 4, "u": 2, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 4]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 91, "n": "南平市合盈贸易有限公司", "c": "8800448095", "t": "卡萨帝城市旗舰店", "x": "福州", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 92, "n": "山西恒宇翔科贸有限公司(南内环店)", "c": "8800333076", "t": "海尔城市旗舰店", "x": "太原", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 93, "n": "双滦文化大厦智家店", "c": "8800365706", "t": "海尔城市旗舰店", "x": "北京", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 94, "n": "洛阳市伊滨区诸葛镇友民家电门市部", "c": "8800220231", "t": "乡镇海尔专卖店", "x": "郑州", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 95, "n": "湘潭旭天贸易有限公司", "c": "8800331119", "t": "海尔城市旗舰店", "x": "长沙", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 3], ["分配商机", 1]], "bt": 4, "bn": 2, "tier": "轻度使用"}, {"r": 96, "n": "贵州霓丰商贸有限公司", "c": "8800460533", "t": "区县海尔专卖店", "x": "贵州", "v": 4, "u": 1, "av": 4.0, "tm": ["巨商汇APP"], "f": [["我的用户", 3], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 97, "n": "天津市长城商贸有限公司(鸿兆祥店)", "c": "8800181022", "t": "乡镇海尔专卖店", "x": "天津", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 1], ["分配商机", 1], ["添加协作人及设计师", 1]], "bt": 2, "bn": 2, "tier": "轻度使用"}, {"r": 98, "n": "鹿邑慧美西关店", "c": "8800278170", "t": "区县海尔专卖店", "x": "郑州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 99, "n": "智顺家北居然店", "c": "8800243679", "t": "海尔城市旗舰店", "x": "重庆", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 100, "n": "和韵成怀柔智家店", "c": "8800441550", "t": "区县海尔专卖店", "x": "北京", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 101, "n": "柞水县海卡美商贸有限责任公司", "c": "8800597222", "t": "区县海尔专卖店", "x": "西安", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 102, "n": "上饶市广丰区桐畈润平家电商场", "c": "8800019164", "t": "区县海尔专卖店", "x": "南昌", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 103, "n": "盐城六和商贸有限公司", "c": "8800223013", "t": "区县海尔专卖店", "x": "南京", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 104, "n": "长沙顺逛电器贸易有限公司三湘店", "c": "8800657645", "t": "区县海尔专卖店", "x": "长沙", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 105, "n": "原阳县金叶电器经营部", "c": "8800529267", "t": "海尔综合店", "x": "郑州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 106, "n": "冷水江市禾青镇理想家电经营部", "c": "8800517561", "t": "海尔产品专卖店(冰洗)", "x": "长沙", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 107, "n": "合肥申心餐饮管理中心", "c": "8800669580", "t": "乡镇海尔专卖店", "x": "合肥", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 108, "n": "大安市鸿盛家电商场", "c": "8800610963", "t": "海尔城市旗舰店", "x": "长春", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 109, "n": "恒多多喜盈门海尔城市旗舰店", "c": "8800610917", "t": "海尔城市旗舰店", "x": "海口", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 110, "n": "玉林市玉州区子瑜家用电器经营部", "c": "8800672301", "t": "海尔冰洗加强店", "x": "南宁", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 111, "n": "郸城县浩达商贸有限公司", "c": "8800458062", "t": "海尔综合店", "x": "郑州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 112, "n": "丹凤县海博电器销售店(个体工商户)", "c": "8800613167", "t": "乡镇海尔专卖店", "x": "西安", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 113, "n": "(万达广场店)安徽普鸿暖通工程有限公司", "c": "8800230606", "t": "海尔城市旗舰店", "x": "合肥", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 114, "n": "新乡县翟坡镇兴胜家电经营部", "c": "8800604691", "t": "乡镇海尔专卖店", "x": "郑州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 115, "n": "阳江市拓新贸易有限公司", "c": "8800620617", "t": "乡镇海尔专卖店", "x": "广州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 116, "n": "昆明百尔海瑞商贸有限公司", "c": "8800232403", "t": "海尔城市旗舰店", "x": "昆明", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 117, "n": "水城区张城朝电器经营部(个体工商户)", "c": "8800626699", "t": "乡镇海尔专卖店", "x": "贵州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 118, "n": "阿克苏酣亲商贸有限公司", "c": "8800622252", "t": "三翼鸟全案店", "x": "新疆", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 119, "n": "陕西星光商贸有限责任公司", "c": "8800018131", "t": "海尔综合店", "x": "西安", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 120, "n": "汇通兴业玉泉营居然卡萨帝体验店", "c": "8800562172", "t": "卡萨帝城市旗舰店", "x": "北京", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 121, "n": "海口誉兴海秀东路三翼鸟店", "c": "8800528982", "t": "卡萨帝城市旗舰店", "x": "海口", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 122, "n": "太原市海晋瑞商贸有限公司(家家园冰冷体验店)", "c": "8800408384", "t": "区县海尔专卖店", "x": "太原", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 123, "n": "东营市海联智家家电有限公司", "c": "8800437759", "t": "三翼鸟全案店", "x": "济南", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 124, "n": "阿克苏市瑞和智能家电中心(个体工商户)", "c": "8800624988", "t": "海尔产品专卖店(冰洗)", "x": "新疆", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 125, "n": "乐亭县城区鑫顺商行", "c": "8800192458", "t": "海尔综合店", "x": "天津", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 126, "n": "大荔两宜备武家电经营部(个体工商户)", "c": "8800570356", "t": "乡镇海尔专卖店", "x": "西安", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 127, "n": "靖江市顺积日用品商行", "c": "8800614021", "t": "海尔空调加强店", "x": "南京", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 128, "n": "繁峙县砂河诚信电器有限责任公司", "c": "8800585230", "t": "乡镇海尔专卖店", "x": "太原", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 129, "n": "黔东南聚烽商贸有限公司", "c": "8800671505", "t": "海尔综合店", "x": "贵州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 130, "n": "湖北骏昌商贸有限公司(颐阳路海尔专卖店)", "c": "8800651427", "t": "海尔城市旗舰店", "x": "武汉", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 131, "n": "青州铭言家电营销经营部", "c": "8800566849", "t": "海尔综合店", "x": "青岛", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 132, "n": "蒙自百鼎商贸有限公司", "c": "8800659281", "t": "海尔冰洗加强店", "x": "昆明", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 133, "n": "慧必达郑韩路中央空调店", "c": "8800534368", "t": "海尔产品专卖店(空调)", "x": "郑州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 134, "n": "陕西圣邦壹铭商贸有限公司三森店", "c": "8800550821", "t": "区县海尔专卖店", "x": "西安", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 135, "n": "河南万宝股份有限公司", "c": "8700007415", "t": "海尔综合店", "x": "郑州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 136, "n": "湖北金海沙节能暖通设备有限公司", "c": "8800481468", "t": "海尔产品专营店(水联网)", "x": "武汉", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 137, "n": "唐县意顺家电门市部", "c": "8800408278", "t": "海尔产品专卖店(冰洗)", "x": "石家庄", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 138, "n": "乌海通用海河店", "c": "8800008754", "t": "海尔综合店", "x": "内蒙", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 139, "n": "清镇市陈陈电器经营部(个体工商户)", "c": "8800669110", "t": "乡镇海尔专卖店", "x": "贵州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 140, "n": "青海交电大楼五四店", "c": "8800231397", "t": "-", "x": "兰州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 141, "n": "青岛洲际通未来城万科广场店", "c": "8800594991", "t": "区县海尔专卖店", "x": "青岛", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 142, "n": "贵州小微指点天下水口建材市场海尔专卖店", "c": "8800671635", "t": "区县海尔专卖店", "x": "贵州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 143, "n": "屯留县利人商贸有限公司(西街店)", "c": "8800568237", "t": "海尔城市旗舰店", "x": "太原", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 144, "n": "滁州市南谯区海璟瑄家电经营部(个体工商户)", "c": "8800621374", "t": "海尔产品专卖店(空调)", "x": "合肥", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 145, "n": "禹州市诚兴电器商行", "c": "8800561589", "t": "乡镇海尔专卖店", "x": "郑州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 146, "n": "龙游双心电器有限公司", "c": "8800194105", "t": "区县海尔专卖店", "x": "杭州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 147, "n": "武隆县建设中路海尔专卖店一店", "c": "8800192839", "t": "区县海尔专卖店", "x": "重庆", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 148, "n": "大化县北景镇阳光家电", "c": "8800035827", "t": "海尔综合店", "x": "南宁", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["新建用户", 2], ["我的用户", 1]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 149, "n": "防城港市鼎好电器有限公司", "c": "8700007653", "t": "海尔城市旗舰店", "x": "南宁", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 150, "n": "十堰新诚商贸有限公司", "c": "8800595609", "t": "区县海尔专卖店", "x": "武汉", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 151, "n": "绥阳县杨修艳家用电器经营部", "c": "8800560237", "t": "海尔产品专卖店(冰洗)", "x": "贵州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 152, "n": "孝义市天和电器销售有限公司", "c": "8800309245", "t": "海尔城市旗舰店", "x": "太原", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 3]], "bt": 3, "bn": 1, "tier": "轻度使用"}, {"r": 153, "n": "广德彬松电器销售有限公司", "c": "8800430203", "t": "区县海尔专卖店", "x": "合肥", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 154, "n": "二郎云领天街龙湖洗护产业专营店", "c": "8800568321", "t": "海尔产品专卖店(冰洗)", "x": "重庆", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 155, "n": "璧山红星美凯龙卡萨帝旗舰店", "c": "8800575575", "t": "三翼鸟全案店", "x": "重庆", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 156, "n": "欣江岩加州三翼鸟店", "c": "8800443377", "t": "卡萨帝城市旗舰店", "x": "福州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 157, "n": "南宁市福展家电经营部", "c": "8800299342", "t": "海尔冰洗加强店", "x": "南宁", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 158, "n": "茂名市茂南区博博电器商行(个体工商户)", "c": "8800672735", "t": "乡镇海尔专卖店", "x": "广州", "v": 3, "u": 1, "av": 3.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2], ["商机搜索", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 159, "n": "鞍山飞达家电有限公司", "c": "8800021716", "t": "海尔城市旗舰店", "x": "沈阳", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 160, "n": "淄博高新区卫固中亚电器商行", "c": "8800340917", "t": "乡镇海尔专卖店", "x": "济南", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 161, "n": "河南琴海金马凯旋卡萨帝店", "c": "8800609316", "t": "卡萨帝城市旗舰店", "x": "郑州", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 162, "n": "赣州市海明温馨家园店", "c": "8800507241", "t": "海尔产品专卖店(空调)", "x": "南昌", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["添加协作人及设计师", 1], ["分配商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 163, "n": "如皋市丁堰镇创佳家用电器经营部", "c": "8800532665", "t": "海尔综合店", "x": "无锡", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 164, "n": "渑池县天池镇天池街前进家电门市", "c": "8800143206", "t": "乡镇海尔专卖店", "x": "郑州", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 165, "n": "沁阳市柏香镇连辉家电", "c": "8800236396", "t": "乡镇海尔专卖店", "x": "郑州", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 166, "n": "化州市铭钥百货贸易有限公司", "c": "8800614285", "t": "乡镇海尔专卖店", "x": "广州", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 167, "n": "衡水爱特购物中心东万德福店", "c": "8800553310", "t": "海尔综合店", "x": "石家庄", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 168, "n": "洱源县海宏商贸有限公司", "c": "8800620750", "t": "区县海尔专卖店", "x": "昆明", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 169, "n": "庆城县盛飞电器铺", "c": "8800611493", "t": "海尔产品专卖店(冰洗)", "x": "西安", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 170, "n": "绵阳巨信盛源商贸有限责任公司", "c": "8800630789", "t": "区县海尔专卖店", "x": "成都", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 171, "n": "唐山市中昇源商贸有限公司", "c": "8800650330", "t": "海尔产品专卖店(厨电)", "x": "天津", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 172, "n": "新余市知和贸易有限公司", "c": "8800447536", "t": "区县海尔专卖店", "x": "南昌", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇PC端"], "f": [["添加协作人及设计师", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 173, "n": "鄂州市南浦路海创电器经营部(武汉东建材市场店)", "c": "8800482761", "t": "海尔产品专营店(水联网)", "x": "武汉", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 174, "n": "保德县鑫海电器经销有限公司", "c": "8800213018", "t": "区县海尔专卖店", "x": "太原", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 175, "n": "景县忠卫家电门市部", "c": "8800314662", "t": "海尔产品专营店(水联网)", "x": "石家庄", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 176, "n": "吴江市今泽电器有限公司", "c": "8700095073", "t": "海尔城市旗舰店", "x": "无锡", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 177, "n": "临县鑫向荣商贸有限公司", "c": "8800567193", "t": "区县海尔专卖店", "x": "太原", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 178, "n": "徐州祥盼商贸有限公司", "c": "8800624285", "t": "乡镇海尔专卖店", "x": "南京", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 179, "n": "青岛德顺佳远供应链有限公司", "c": "8800452079", "t": "海尔产品专营店(水联网)", "x": "青岛", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["商机搜索", 1], ["我的用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 180, "n": "甘谷县尚亿家电有限公司", "c": "8700013512", "t": "区县海尔专卖店", "x": "兰州", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 181, "n": "内蒙古平跃达科技有限公司", "c": "8800324336", "t": "区县海尔专卖店", "x": "内蒙", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 182, "n": "临沂格美工程有限公司", "c": "8800633923", "t": "海尔城市旗舰店", "x": "济宁", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 183, "n": "山西晋程联创科技有限公司", "c": "8800591764", "t": "海尔产品专营店(水联网)", "x": "太原", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 184, "n": "汇通北四居然卡萨帝体验店", "c": "8800227412", "t": "卡萨帝城市旗舰店", "x": "北京", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 185, "n": "太原市鑫元商贸有限公司(红星美凯龙国金店)", "c": "8800498088", "t": "卡萨帝城市体验中心", "x": "太原", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 186, "n": "乌兰察布市锐源电器销售有限公司", "c": "8800155150", "t": "海尔城市旗舰店", "x": "内蒙", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 2]], "bt": 2, "bn": 1, "tier": "轻度使用"}, {"r": 187, "n": "乌兰察布市锐源电器销售有限公司(三翼鸟店)", "c": "8800482423", "t": "区县海尔专卖店", "x": "内蒙", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 188, "n": "菏泽高驰电器有限公司", "c": "8800610964", "t": "海尔综合店", "x": "济宁", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["商机搜索", 1], ["我的用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 189, "n": "石家庄海本丰收路店", "c": "8800369376", "t": "海尔产品专营店(水联网)", "x": "石家庄", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 190, "n": "连江县京鑫机电设备有限公司", "c": "8800641014", "t": "乡镇海尔专卖店", "x": "福州", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 191, "n": "绥化市禹鼎商贸有限公司", "c": "8800636966", "t": "区县海尔专卖店", "x": "哈尔滨", "v": 2, "u": 1, "av": 2.0, "tm": ["巨商汇APP"], "f": [["我的用户", 2]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 192, "n": "河南海一东欧卡萨帝店", "c": "8800341356", "t": "卡萨帝城市旗舰店", "x": "郑州", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 193, "n": "兴国县德天商贸有限公司", "c": "8800490104", "t": "区县海尔专卖店", "x": "南昌", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 194, "n": "上海之升商贸有限公司", "c": "8800136684", "t": "海尔产品专卖店(空调)", "x": "上海", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇PC端"], "f": [["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 195, "n": "织金县竟平家用视听设备经营部", "c": "8800425519", "t": "区县海尔专卖店", "x": "贵州", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 196, "n": "森垚远洋店", "c": "8800594501", "t": "海尔产品专卖店(空调)", "x": "贵州", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["分配商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 197, "n": "伊金霍洛旗宇翔家用电器销售有限公司", "c": "8800625346", "t": "区县海尔专卖店", "x": "内蒙", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 198, "n": "菏泽明舒装饰工程有限公司", "c": "8800610676", "t": "海尔产品专卖店(暖通)", "x": "济宁", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 199, "n": "元氏县大成商贸有限公司", "c": "8800181593", "t": "海尔综合店", "x": "石家庄", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["分配商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 200, "n": "济宁正之诺商贸有限公司", "c": "8800653353", "t": "乡镇海尔专卖店", "x": "济宁", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["分配商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 201, "n": "珙县盛世如意商贸有限公司巡场店", "c": "8800187625", "t": "区县海尔专卖店", "x": "重庆", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["添加协作人及设计师", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 202, "n": "安康市海昌商贸有限公司金秋店", "c": "8800191055", "t": "海尔产品专卖店(厨电)", "x": "西安", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["添加协作人及设计师", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 203, "n": "黑龙江海商汇商贸有限公司", "c": "8800228124", "t": "区县海尔专卖店", "x": "哈尔滨", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇PC端"], "f": [["分配商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 204, "n": "宝鸡海丰商贸有限公司高新智家店", "c": "8800481224", "t": "海尔城市旗舰店", "x": "西安", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 205, "n": "盐城市大丰正大贸易有限公司", "c": "8700001514", "t": "海尔城市旗舰店", "x": "南京", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["添加协作人及设计师", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 206, "n": "仁怀市鑫希家电经营部(个体工商户)", "c": "8800662773", "t": "海尔产品专卖店(暖通)", "x": "贵州", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 207, "n": "日日宏御龙瀚府智家店", "c": "8800206930", "t": "区县海尔专卖店", "x": "北京", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["添加协作人及设计师", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 208, "n": "邢台麒凯信息科技有限公司", "c": "8800416248", "t": "海尔产品专卖店(中央空调)", "x": "石家庄", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["分配商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 209, "n": "邛崃市高埂街道旭杰电器经营部(个体工商户)", "c": "8800564501", "t": "乡镇海尔专卖店", "x": "成都", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 210, "n": "孝感海立电器有限公司(北京路店)", "c": "8800579746", "t": "海尔城市旗舰店", "x": "武汉", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 211, "n": "乐安县国信电器商贸", "c": "8700099407", "t": "区县海尔专卖店", "x": "南昌", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}, {"r": 212, "n": "北京问恒双井京东MALL空调店", "c": "8800663109", "t": "海尔产品专卖店(空调)", "x": "北京", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 213, "n": "兰州小微张掖市名豪家电滨河新区海尔城市旗舰店", "c": "8800418800", "t": "海尔城市旗舰店", "x": "兰州", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["跟进商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 214, "n": "广西珩鑫科技有限公司", "c": "8800493043", "t": "海尔产品专卖店(空调)", "x": "南宁", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["分配商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 215, "n": "安丘市永泰家电中心", "c": "8800013115", "t": "区县海尔专卖店", "x": "青岛", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇PC端"], "f": [["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 216, "n": "陕西海秦顺全屋采暖1号店", "c": "8800555178", "t": "海尔产品专营店(水联网)", "x": "西安", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇PC端"], "f": [["跟进商机", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 217, "n": "澄城县百隆商贸有限责任公司", "c": "8700007098", "t": "海尔综合店", "x": "西安", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇PC端"], "f": [["新建用户", 1]], "bt": 1, "bn": 1, "tier": "仅浏览"}, {"r": 218, "n": "北京盛华博宇商贸有限公司", "c": "8800012408", "t": "区县海尔专卖店", "x": "北京", "v": 1, "u": 1, "av": 1.0, "tm": ["巨商汇APP"], "f": [["我的用户", 1]], "bt": 0, "bn": 0, "tier": "仅浏览"}];
+
+const PAGE_SIZE = 20;
+let currentTier = 'all';
+let currentSearch = '';
+let currentPage = 1;
+
+function getFiltered() {
+  let list = STORE_DATA;
+  if (currentTier !== 'all') list = list.filter(function(s){ return s.tier === currentTier; });
+  if (currentSearch) list = list.filter(function(s){ return s.n.indexOf(currentSearch) !== -1; });
+  return list;
+}
+
+function tierClass(tier) {
+  if (tier === '深度使用') return 'tier-deep';
+  if (tier === '活跃使用') return 'tier-active';
+  if (tier === '轻度使用') return 'tier-light';
+  return 'tier-passive';
+}
+
+function rankBadge(r) {
+  var cls = r <= 3 ? 'rank-' + r : 'rank-n';
+  return '<span class="rank-badge ' + cls + '">' + r + '</span>';
+}
+
+function renderTable() {
+  var filtered = getFiltered();
+  var totalP = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (currentPage > totalP) currentPage = totalP;
+  var start = (currentPage - 1) * PAGE_SIZE;
+  var page = filtered.slice(start, start + PAGE_SIZE);
+
+  var tbody = document.getElementById('rankTbody');
+  var html = '';
+  for (var i = 0; i < page.length; i++) {
+    var s = page[i];
+    var topFuncs = s.f.slice(0, 3).map(function(x){ return x[0] + '(' + x[1] + ')'; }).join(', ');
+    html += '<tr>'
+      + '<td>' + rankBadge(s.r) + '</td>'
+      + '<td>' + s.n + '</td>'
+      + '<td>' + s.c + '</td>'
+      + '<td>' + s.t + '</td>'
+      + '<td class="num">' + s.v + '</td>'
+      + '<td class="num">' + s.bt + '</td>'
+      + '<td class="num">' + s.bn + '</td>'
+      + '<td class="num">' + s.u + '</td>'
+      + '<td class="num">' + s.av + '</td>'
+      + '<td><span class="' + tierClass(s.tier) + '">' + s.tier + '</span></td>'
+      + '<td style="font-size:11px;color:#64748b">' + topFuncs + '</td>'
+      + '</tr>';
+  }
+  tbody.innerHTML = html;
+
+  // 分页
+  var pag = document.getElementById('rankPagination');
+  var pagHtml = '<span>共 ' + filtered.length + ' 家门店，第 ' + currentPage + '/' + totalP + ' 页</span>';
+  pagHtml += '<button onclick="goPage(-1)"' + (currentPage <= 1 ? ' disabled' : '') + '>&lt; 上一页</button>';
+  pagHtml += '<button onclick="goPage(1)"' + (currentPage >= totalP ? ' disabled' : '') + '>下一页 &gt;</button>';
+  pag.innerHTML = pagHtml;
+}
+
+function goPage(dir) {
+  currentPage += dir;
+  renderTable();
+}
+
+// 筛选按钮事件
+document.getElementById('rankFilters').addEventListener('click', function(e) {
+  if (e.target.classList.contains('rank-filter-btn')) {
+    var btns = document.querySelectorAll('.rank-filter-btn');
+    btns.forEach(function(b){ b.classList.remove('active'); });
+    e.target.classList.add('active');
+    currentTier = e.target.getAttribute('data-tier');
+    currentPage = 1;
+    renderTable();
+  }
+});
+
+// 搜索框事件
+document.getElementById('rankSearch').addEventListener('input', function(e) {
+  currentSearch = e.target.value.trim();
+  currentPage = 1;
+  renderTable();
+});
+
+// 初始渲染
+renderTable();
+// ===== 七、门店迁移分析 =====
+const MIG_DATA = [{"r": 1, "n": "驻马店永晟盘龙山路三翼鸟店", "t": "三翼鸟全案店", "bt": 144, "bn": 19, "u": 1, "av": 144.0, "tier": "深度使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 40], ["用户经营-商机详情", 28], ["用户经营-商机详情-跟进列表", 14]]}, {"r": 2, "n": "武汉传承动力环保科技有限公司(青山居然之家店)", "t": "三翼鸟全案店", "bt": 95, "bn": 17, "u": 1, "av": 95.0, "tier": "深度使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP/定制平台2.0PC端", "f": [["用户经营-商机详情", 28], ["APP-用户经营-页面", 16], ["用户经营-商机详情-跟进列表", 9]]}, {"r": 3, "n": "开封米美居然三翼鸟新店", "t": "三翼鸟全案店", "bt": 93, "bn": 11, "u": 1, "av": 93.0, "tier": "深度使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP/定制平台2.0PC端", "f": [["APP-用户经营-页面", 31], ["用户经营-商机详情-跟进列表", 22], ["用户经营-商机详情", 15]]}, {"r": 4, "n": "郑州小微开封米美顺河区专卖店", "t": "区县海尔专卖店", "bt": 75, "bn": 16, "u": 1, "av": 75.0, "tier": "深度使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 20], ["用户经营-商机详情-跟进列表", 12], ["用户经营-商机详情", 8]]}, {"r": 5, "n": "屯留县利人商贸有限公司", "t": "海尔城市旗舰店", "bt": 58, "bn": 14, "u": 1, "av": 58.0, "tier": "深度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 20], ["用户经营-商机详情", 8], ["用户经营-商机详情-跟进列表", 6]]}, {"r": 6, "n": "铜仁市欣海乐碧江区滨江店", "t": "三翼鸟全案店", "bt": 41, "bn": 12, "u": 1, "av": 41.0, "tier": "深度使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 14], ["用户经营-商机详情", 10], ["用户经营-商机详情-展开", 4]]}, {"r": 7, "n": "西安雷廷三翼鸟城市体验中心", "t": "三翼鸟城市体验中心", "bt": 35, "bn": 11, "u": 1, "av": 35.0, "tier": "深度使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP/定制平台2.0PC端", "f": [["APP-用户经营-页面", 10], ["用户经营-商机详情-跟进列表", 10], ["用户经营-去记录", 3]]}, {"r": 8, "n": "安龙县诚信电器家私商城", "t": "乡镇海尔专卖店", "bt": 30, "bn": 10, "u": 1, "av": 30.0, "tier": "深度使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-商机详情", 10], ["APP-用户经营-页面", 4], ["用户经营-商机详情-展开", 4]]}, {"r": 9, "n": "六安龙翼电器有限公司", "t": "海尔产品专卖店(净水)", "bt": 30, "bn": 7, "u": 1, "av": 30.0, "tier": "深度使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-商机详情", 10], ["用户经营-商机详情-编辑商机", 6], ["APP-用户经营-页面", 4]]}, {"r": 10, "n": "唐山隆云暖通设备有限公司", "t": "海尔产品专卖店(中央空调)", "bt": 28, "bn": 6, "u": 1, "av": 28.0, "tier": "深度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 10], ["用户经营-商机详情", 10], ["用户经营-商机详情-展开", 3]]}, {"r": 11, "n": "娄底市惠尔圣电器有限公司洞新分店", "t": "海尔城市旗舰店", "bt": 27, "bn": 4, "u": 1, "av": 27.0, "tier": "深度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 10], ["用户经营-商机详情", 10], ["用户经营-商机详情-展开", 5]]}, {"r": 12, "n": "开封居然之家米美分洗养护场景店", "t": "海尔产品专卖店(冰洗)", "bt": 22, "bn": 5, "u": 1, "av": 22.0, "tier": "深度使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 10], ["用户经营-商机详情", 4], ["用户经营-商机详情-跟进列表", 4]]}, {"r": 13, "n": "平凉市三友电器有限责任公司", "t": "海尔城市旗舰店", "bt": 19, "bn": 9, "u": 1, "av": 19.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 6], ["用户经营-商机详情", 4], ["用户经营-商机详情-状态", 2]]}, {"r": 14, "n": "兰考县智家商贸有限公司", "t": "区县海尔专卖店", "bt": 16, "bn": 6, "u": 1, "av": 16.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-商机详情", 6], ["APP-用户经营-页面", 4], ["用户经营-商机详情-展开", 2]]}, {"r": 15, "n": "昆明海卡家电有限公司", "t": "海尔城市旗舰店", "bt": 16, "bn": 6, "u": 1, "av": 16.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 6], ["用户经营-商机详情-跟进列表", 4], ["用户经营-去记录", 2]]}, {"r": 16, "n": "河南海成惠济万达二楼店", "t": "卡萨帝城市旗舰店", "bt": 15, "bn": 5, "u": 1, "av": 15.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 6], ["用户经营-商机详情-去开单", 4], ["用户经营-添加用户", 2]]}, {"r": 17, "n": "武汉海日新商贸有限公司(汉西红星美凯龙)", "t": "海尔城市旗舰店", "bt": 15, "bn": 4, "u": 1, "av": 15.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 5], ["用户经营-商机详情", 5], ["用户经营-商机详情-展开", 3]]}, {"r": 18, "n": "宜昌顺川电器销售有限公司(星河水岸海尔专卖店)", "t": "区县海尔专卖店", "bt": 14, "bn": 3, "u": 1, "av": 14.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 6], ["用户经营-商机详情", 6], ["用户经营-商机详情-展开", 2]]}, {"r": 19, "n": "吉安三翼鸟智慧智能科技有限公司", "t": "三翼鸟全案店", "bt": 14, "bn": 6, "u": 1, "av": 14.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP/定制平台2.0PC端", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 4], ["PC端-我的用户-列表-查看详情", 2]]}, {"r": 20, "n": "广西蓝海家电销售有限公司", "t": "区县海尔专卖店", "bt": 14, "bn": 7, "u": 1, "av": 14.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 4], ["用户经营-商机详情-跟进列表", 2]]}, {"r": 21, "n": "宝鸡海丰商贸有限公司", "t": "区县海尔专卖店", "bt": 14, "bn": 6, "u": 1, "av": 14.0, "tier": "活跃使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 4], ["用户经营-商机详情-展开", 2]]}, {"r": 22, "n": "上善美居西美店", "t": "三翼鸟全案店", "bt": 14, "bn": 4, "u": 1, "av": 14.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP/定制平台2.0PC端", "f": [["APP-用户经营-页面", 6], ["用户经营-商机详情", 6], ["用户经营-商机详情-状态", 1]]}, {"r": 23, "n": "沈阳海骏机电设备有限公司", "t": "海尔产品专卖店(空调)", "bt": 13, "bn": 4, "u": 1, "av": 13.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 6], ["用户经营-商机详情", 4], ["用户经营-商机详情-展开", 2]]}, {"r": 24, "n": "枝江安娅商贸有限公司(欧亚达三翼鸟全案店)", "t": "三翼鸟全案店", "bt": 12, "bn": 4, "u": 1, "av": 12.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 4], ["用户经营-添加用户", 2]]}, {"r": 25, "n": "如皋市吴窑海尔专卖店", "t": "乡镇海尔专卖店", "bt": 11, "bn": 5, "u": 1, "av": 11.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 4], ["用户经营-商机详情-展开", 1]]}, {"r": 26, "n": "邯郸市永年区天顺经贸有限公司", "t": "乡镇海尔专卖店", "bt": 10, "bn": 3, "u": 1, "av": 10.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 5], ["PC端-我的用户-列表-查看详情", 3], ["PC端-我的用户-列表-商机信息展开", 2]]}, {"r": 27, "n": "河南海成红星美凯龙店", "t": "卡萨帝城市旗舰店", "bt": 10, "bn": 3, "u": 1, "av": 10.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情-去开单", 4], ["用户经营-添加用户", 2]]}, {"r": 28, "n": "河南海成三翼鸟城市体验中心", "t": "三翼鸟城市体验中心", "bt": 10, "bn": 3, "u": 1, "av": 10.0, "tier": "活跃使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情-去开单", 4], ["用户经营-添加用户", 2]]}, {"r": 29, "n": "连云港智鑫达东海水晶公园海尔智家店", "t": "区县海尔专卖店", "bt": 10, "bn": 5, "u": 1, "av": 10.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-商机详情", 4], ["APP-用户经营-页面", 2], ["用户经营-商机详情-编辑商机", 2]]}, {"r": 30, "n": "程顺商水海尔智家旗舰店", "t": "区县海尔专卖店", "bt": 10, "bn": 3, "u": 1, "av": 10.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情-去开单", 4], ["用户经营-添加用户", 2]]}, {"r": 31, "n": "襄阳森海电器有限公司", "t": "区县海尔专卖店", "bt": 10, "bn": 4, "u": 1, "av": 10.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 4], ["用户经营-商机详情-展开", 1]]}, {"r": 32, "n": "咸阳金瑞海商贸有限公司", "t": "海尔城市旗舰店", "bt": 10, "bn": 6, "u": 1, "av": 10.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 2], ["用户经营-搜索", 1]]}, {"r": 33, "n": "阜南县王堰镇家用电器经营维修部", "t": "乡镇海尔专卖店", "bt": 9, "bn": 2, "u": 1, "av": 9.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 6], ["用户经营-搜索", 3]]}, {"r": 34, "n": "邵东市博诚电器销售有限公司家电城店", "t": "区县海尔专卖店", "bt": 9, "bn": 4, "u": 1, "av": 9.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 4], ["PC端-我的用户-列表-修改状态", 2], ["PC端-我的用户-列表-查看详情", 2]]}, {"r": 35, "n": "陕西宸海宏博智家店", "t": "海尔城市旗舰店", "bt": 8, "bn": 6, "u": 1, "av": 8.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-添加用户", 1]]}, {"r": 36, "n": "日照星瑞家用电器有限公司三翼鸟店", "t": "区县海尔专卖店", "bt": 8, "bn": 4, "u": 1, "av": 8.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情-跟进列表", 2], ["用户经营-去记录", 1]]}, {"r": 37, "n": "佛山市琦能电器有限公司", "t": "海尔产品专卖店(空调)", "bt": 8, "bn": 5, "u": 1, "av": 8.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["PC端-我的用户-商机详情页", 2]]}, {"r": 38, "n": "通榆县洪石联赢电器有限责任公司", "t": "乡镇海尔专卖店", "bt": 8, "bn": 2, "u": 1, "av": 8.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 6], ["用户经营-添加用户", 2]]}, {"r": 39, "n": "昆山商之都电器设备有限公司", "t": "海尔产品专卖店(厨电)", "bt": 8, "bn": 4, "u": 1, "av": 8.0, "tier": "活跃使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 40, "n": "唐山市古冶区晓辉电器店(个体工商户)", "t": "海尔产品专卖店(冰洗)", "bt": 8, "bn": 2, "u": 1, "av": 8.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 6], ["用户经营-添加用户", 2]]}, {"r": 41, "n": "合江县侨台鑫家电有限公司", "t": "区县海尔专卖店", "bt": 8, "bn": 4, "u": 1, "av": 8.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 42, "n": "志联于都海尔专卖店", "t": "区县海尔专卖店", "bt": 8, "bn": 4, "u": 1, "av": 8.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 3], ["用户经营-商机详情", 3], ["用户经营-商机详情-展开", 1]]}, {"r": 43, "n": "(南店)临泉县临武家电有限责任公司", "t": "区县海尔专卖店", "bt": 7, "bn": 3, "u": 1, "av": 7.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情", 2], ["用户经营-商机详情-状态", 1]]}, {"r": 44, "n": "北京中海聚诚科技有限公司", "t": "海尔产品专卖店(空调)", "bt": 7, "bn": 4, "u": 1, "av": 7.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-修改状态", 2], ["PC端-我的用户-列表-分配负责人", 2]]}, {"r": 45, "n": "贵州省三都县集采贸易有限公司", "t": "乡镇海尔专卖店", "bt": 7, "bn": 3, "u": 1, "av": 7.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 46, "n": "内蒙古乌兰察布市凉城县信兴家电有限公司", "t": "区县海尔专卖店", "bt": 7, "bn": 3, "u": 1, "av": 7.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 47, "n": "武陟县语彤家电营销部(个体工商户)", "t": "乡镇海尔专卖店", "bt": 7, "bn": 2, "u": 1, "av": 7.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 6], ["用户经营-添加用户", 1]]}, {"r": 48, "n": "湖北鸿基锐创贸易有限公司(汉阳红星美凯龙店)", "t": "海尔城市旗舰店", "bt": 6, "bn": 2, "u": 1, "av": 6.0, "tier": "活跃使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-搜索", 2]]}, {"r": 49, "n": "梁平区亿发家电经营部(个体工商户)", "t": "乡镇海尔专卖店", "bt": 6, "bn": 2, "u": 1, "av": 6.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-添加用户", 2]]}, {"r": 50, "n": "南阳海亿鑫工程有限公司", "t": "海尔产品专卖店(空调)", "bt": 6, "bn": 4, "u": 1, "av": 6.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 51, "n": "内蒙古晗铄电器有限责任公司", "t": "海尔产品专卖店(空调)", "bt": 6, "bn": 4, "u": 1, "av": 6.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营—待分配-分配", 1]]}, {"r": 52, "n": "阳城县旭东商贸有限公司", "t": "海尔综合店", "bt": 6, "bn": 3, "u": 1, "av": 6.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 2]]}, {"r": 53, "n": "吉安林玥水联网一号店", "t": "海尔产品专营店(水联网)", "bt": 6, "bn": 4, "u": 1, "av": 6.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-跟进列表", 2], ["用户经营-更多", 1]]}, {"r": 54, "n": "三河市风驰电器销售有限公司", "t": "海尔城市旗舰店", "bt": 6, "bn": 2, "u": 1, "av": 6.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 3], ["用户经营-商机详情", 3]]}, {"r": 55, "n": "上海华克斯实业股份有限公司", "t": "区县海尔专卖店", "bt": 6, "bn": 2, "u": 1, "av": 6.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-搜索", 2]]}, {"r": 56, "n": "东莞市宏海机电工程有限公司", "t": "海尔产品专卖店(空调)", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-添加用户", 1]]}, {"r": 57, "n": "锡山红星三翼鸟001号店", "t": "卡萨帝城市旗舰店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP/定制平台2.0PC端", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 58, "n": "南京新森大润发邗江店", "t": "海尔综合店", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-搜索", 1]]}, {"r": 59, "n": "崖头家电门市", "t": "乡镇海尔专卖店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 60, "n": "易县易通达商贸有限公司", "t": "区县海尔专卖店", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 3], ["用户经营-搜索", 2]]}, {"r": 61, "n": "开平市水口镇龙杰家用电器经营部(个体工商户)", "t": "乡镇海尔专卖店", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-搜索", 1]]}, {"r": 62, "n": "西安银丰电器有限公司", "t": "区县海尔专卖店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 63, "n": "广州市皓群电器有限公司白云店", "t": "卡萨帝城市旗舰店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 64, "n": "获嘉海一嘉和三翼鸟店", "t": "区县海尔专卖店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-更多", 1]]}, {"r": 65, "n": "仙桃万吉连环境科技有限公司(三翼鸟新华书店)", "t": "区县海尔专卖店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 66, "n": "南昌市泰昂贸易有限公司", "t": "海尔综合店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 67, "n": "普宁市云落宇晨建材经营部", "t": "海尔产品专卖店(冰洗)", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-添加用户", 1]]}, {"r": 68, "n": "梦琪华商海尔专卖店", "t": "区县海尔专卖店", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-搜索", 1]]}, {"r": 69, "n": "陕西众辉天驰商贸有限公司", "t": "海尔产品专卖店(空调)", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 4], ["PC端-我的用户-列表-查看详情", 1]]}, {"r": 70, "n": "榆林市金松商贸有限公司人民西路店", "t": "海尔城市旗舰店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-打电话", 1]]}, {"r": 71, "n": "双加李治刚家电", "t": "海尔产品专卖店(冰洗)", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 72, "n": "西安雷廷南大卡萨帝旗舰店", "t": "卡萨帝城市旗舰店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP/定制平台2.0PC端", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 73, "n": "临颍县鹏辉家电经营部", "t": "乡镇海尔专卖店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 74, "n": "日照凌云江豪旗舰店", "t": "海尔综合店", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-搜索", 1]]}, {"r": 75, "n": "鞍山华轩商贸有限公司", "t": "海尔综合店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 76, "n": "河南海成生活家制冷场景融合店", "t": "海尔产品专卖店(冰洗)", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 77, "n": "三原同乡恩泽家电经销部", "t": "乡镇海尔专卖店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-打电话", 1]]}, {"r": 78, "n": "陕西海惠亿家电器有限公司冰冷体验店", "t": "海尔产品专卖店(冰冷)", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-跟进列表", 2], ["用户经营-去记录", 1]]}, {"r": 79, "n": "渭南易美易实商贸有限公司", "t": "区县海尔专卖店", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 4], ["用户经营-添加用户", 1]]}, {"r": 80, "n": "上饶市发波电器有限公司", "t": "区县海尔专卖店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 81, "n": "太原市鑫元商贸有限公司", "t": "海尔综合店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2], ["用户经营-商机详情-展开", 1]]}, {"r": 82, "n": "海成北龙湖三翼鸟店", "t": "海尔城市旗舰店", "bt": 5, "bn": 3, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情-去开单", 2], ["用户经营-添加用户", 1]]}, {"r": 83, "n": "六矿海尔空调专营店", "t": "海尔产品专卖店(空调)", "bt": 5, "bn": 2, "u": 1, "av": 5.0, "tier": "活跃使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 3], ["用户经营-搜索", 2]]}, {"r": 84, "n": "洛阳市伊滨区诸葛镇友民家电门市部", "t": "乡镇海尔专卖店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 85, "n": "彭泽县同信家电有限公司湖口店", "t": "统帅综合店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 86, "n": "杭州弘邦电器有限公司", "t": "海尔产品专卖店(空调)", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 87, "n": "山西恒宇翔科贸有限公司(南内环店)", "t": "海尔城市旗舰店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 88, "n": "湘潭旭天贸易有限公司", "t": "海尔城市旗舰店", "bt": 4, "bn": 3, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-查看详情", 1], ["PC端-我的用户-列表-分配负责人", 1]]}, {"r": 89, "n": "山西恒宇翔科贸有限公司", "t": "海尔城市旗舰店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 90, "n": "赞皇县德裕商贸有限公司", "t": "区县海尔专卖店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 91, "n": "山西晋昶商贸有限责任公司", "t": "区县海尔专卖店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 92, "n": "伊犁博舟商贸有限公司(特克斯店)", "t": "区县海尔专卖店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 93, "n": "嵩县飞恒电器销售店", "t": "区县海尔专卖店", "bt": 4, "bn": 1, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 4]]}, {"r": 94, "n": "贵州霓丰商贸有限公司", "t": "区县海尔专卖店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 3], ["用户经营-搜索", 1]]}, {"r": 95, "n": "南平市合盈贸易有限公司", "t": "卡萨帝城市旗舰店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 96, "n": "双滦文化大厦智家店", "t": "海尔城市旗舰店", "bt": 4, "bn": 2, "u": 1, "av": 4.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-商机详情", 2]]}, {"r": 97, "n": "智顺家北居然店", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-查看详情", 1]]}, {"r": 98, "n": "原阳县金叶电器经营部", "t": "海尔综合店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 99, "n": "靖江市顺积日用品商行", "t": "海尔空调加强店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 100, "n": "南宁市福展家电经营部", "t": "海尔冰洗加强店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 101, "n": "滁州市南谯区海璟瑄家电经营部(个体工商户)", "t": "海尔产品专卖店(空调)", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-查看详情", 1]]}, {"r": 102, "n": "昆明百尔海瑞商贸有限公司", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 103, "n": "(万达广场店)安徽普鸿暖通工程有限公司", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-查看详情", 1]]}, {"r": 104, "n": "玉林市玉州区子瑜家用电器经营部", "t": "海尔冰洗加强店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 105, "n": "阿克苏酣亲商贸有限公司", "t": "三翼鸟全案店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-查看详情", 1]]}, {"r": 106, "n": "上饶市广丰区桐畈润平家电商场", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 107, "n": "青岛洲际通未来城万科广场店", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 108, "n": "水城区张城朝电器经营部(个体工商户)", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 109, "n": "唐县意顺家电门市部", "t": "海尔产品专卖店(冰洗)", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 110, "n": "孝义市天和电器销售有限公司", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-查看详情", 1]]}, {"r": 111, "n": "和韵成怀柔智家店", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 112, "n": "盐城六和商贸有限公司", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 113, "n": "湖北骏昌商贸有限公司(颐阳路海尔专卖店)", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 114, "n": "大安市鸿盛家电商场", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 115, "n": "恒多多喜盈门海尔城市旗舰店", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 116, "n": "郸城县浩达商贸有限公司", "t": "海尔综合店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 117, "n": "慧必达郑韩路中央空调店", "t": "海尔产品专卖店(空调)", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 118, "n": "柞水县海卡美商贸有限责任公司", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 119, "n": "清镇市陈陈电器经营部(个体工商户)", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 120, "n": "繁峙县砂河诚信电器有限责任公司", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 121, "n": "大化县北景镇阳光家电", "t": "海尔综合店", "bt": 3, "bn": 3, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 1], ["用户经营-添加用户", 1], ["用户经营-商机详情-去开单", 1]]}, {"r": 122, "n": "阿克苏市瑞和智能家电中心(个体工商户)", "t": "海尔产品专卖店(冰洗)", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 123, "n": "武隆县建设中路海尔专卖店一店", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 124, "n": "屯留县利人商贸有限公司(西街店)", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 125, "n": "蒙自百鼎商贸有限公司", "t": "海尔冰洗加强店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 126, "n": "绥阳县杨修艳家用电器经营部", "t": "海尔产品专卖店(冰洗)", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 127, "n": "禹州市诚兴电器商行", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 128, "n": "长沙顺逛电器贸易有限公司三湘店", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 129, "n": "广德彬松电器销售有限公司", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 130, "n": "太原市海晋瑞商贸有限公司(家家园冰冷体验店)", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 131, "n": "河南万宝股份有限公司", "t": "海尔综合店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 132, "n": "黔东南聚烽商贸有限公司", "t": "海尔综合店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 133, "n": "乐亭县城区鑫顺商行", "t": "海尔综合店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 134, "n": "合肥申心餐饮管理中心", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 135, "n": "陕西星光商贸有限责任公司", "t": "海尔综合店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 136, "n": "鹿邑慧美西关店", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 137, "n": "茂名市茂南区博博电器商行(个体工商户)", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 138, "n": "新乡县翟坡镇兴胜家电经营部", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 139, "n": "阳江市拓新贸易有限公司", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 140, "n": "龙游双心电器有限公司", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-查看详情", 1]]}, {"r": 141, "n": "欣江岩加州三翼鸟店", "t": "卡萨帝城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 142, "n": "璧山红星美凯龙卡萨帝旗舰店", "t": "三翼鸟全案店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 143, "n": "汇通兴业玉泉营居然卡萨帝体验店", "t": "卡萨帝城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 144, "n": "陕西圣邦壹铭商贸有限公司三森店", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 145, "n": "贵州小微指点天下水口建材市场海尔专卖店", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 146, "n": "二郎云领天街龙湖洗护产业专营店", "t": "海尔产品专卖店(冰洗)", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 147, "n": "丹凤县海博电器销售店(个体工商户)", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 148, "n": "乌海通用海河店", "t": "海尔综合店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 149, "n": "海口誉兴海秀东路三翼鸟店", "t": "卡萨帝城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 150, "n": "防城港市鼎好电器有限公司", "t": "海尔城市旗舰店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 151, "n": "十堰新诚商贸有限公司", "t": "区县海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 152, "n": "青州铭言家电营销经营部", "t": "海尔综合店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 153, "n": "冷水江市禾青镇理想家电经营部", "t": "海尔产品专卖店(冰洗)", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 154, "n": "天津市长城商贸有限公司(鸿兆祥店)", "t": "乡镇海尔专卖店", "bt": 3, "bn": 3, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-列表-商机信息展开", 1], ["PC端-我的用户-列表-分配负责人", 1], ["PC端-我的用户-列表-添加设计师", 1]]}, {"r": 155, "n": "东营市海联智家家电有限公司", "t": "三翼鸟全案店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-商机详情页", 2], ["PC端-我的用户-列表-查看详情", 1]]}, {"r": 156, "n": "湖北金海沙节能暖通设备有限公司", "t": "海尔产品专营店(水联网)", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 157, "n": "青海交电大楼五四店", "t": "-", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-搜索", 1]]}, {"r": 158, "n": "大荔两宜备武家电经营部(个体工商户)", "t": "乡镇海尔专卖店", "bt": 3, "bn": 2, "u": 1, "av": 3.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2], ["用户经营-添加用户", 1]]}, {"r": 159, "n": "鞍山飞达家电有限公司", "t": "海尔城市旗舰店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 160, "n": "连江县京鑫机电设备有限公司", "t": "乡镇海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 161, "n": "石家庄海本丰收路店", "t": "海尔产品专营店(水联网)", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 162, "n": "新余市知和贸易有限公司", "t": "区县海尔专卖店", "bt": 2, "bn": 2, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-列表-添加设计师", 1], ["PC端-我的用户-列表-更换负责人", 1]]}, {"r": 163, "n": "衡水爱特购物中心东万德福店", "t": "海尔综合店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 164, "n": "绵阳巨信盛源商贸有限责任公司", "t": "区县海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 165, "n": "绥化市禹鼎商贸有限公司", "t": "区县海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 166, "n": "赣州市海明温馨家园店", "t": "海尔产品专卖店(空调)", "bt": 2, "bn": 2, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-更多", 1], ["用户经营—待分配-分配", 1]]}, {"r": 167, "n": "渑池县天池镇天池街前进家电门市", "t": "乡镇海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-打电话", 2]]}, {"r": 168, "n": "菏泽高驰电器有限公司", "t": "海尔综合店", "bt": 2, "bn": 2, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-搜索", 1], ["APP-用户经营-页面", 1]]}, {"r": 169, "n": "乌兰察布市锐源电器销售有限公司", "t": "海尔城市旗舰店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-打电话", 2]]}, {"r": 170, "n": "乌兰察布市锐源电器销售有限公司(三翼鸟店)", "t": "区县海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 171, "n": "唐山市中昇源商贸有限公司", "t": "海尔产品专卖店(厨电)", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 172, "n": "甘谷县尚亿家电有限公司", "t": "区县海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 173, "n": "徐州祥盼商贸有限公司", "t": "乡镇海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 174, "n": "内蒙古平跃达科技有限公司", "t": "区县海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 175, "n": "临县鑫向荣商贸有限公司", "t": "区县海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 176, "n": "青岛德顺佳远供应链有限公司", "t": "海尔产品专营店(水联网)", "bt": 2, "bn": 2, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["用户经营-搜索", 1], ["APP-用户经营-页面", 1]]}, {"r": 177, "n": "汇通北四居然卡萨帝体验店", "t": "卡萨帝城市旗舰店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 2]]}, {"r": 178, "n": "山西晋程联创科技有限公司", "t": "海尔产品专营店(水联网)", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 179, "n": "沁阳市柏香镇连辉家电", "t": "乡镇海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 180, "n": "保德县鑫海电器经销有限公司", "t": "区县海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 181, "n": "庆城县盛飞电器铺", "t": "海尔产品专卖店(冰洗)", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 182, "n": "如皋市丁堰镇创佳家用电器经营部", "t": "海尔综合店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 183, "n": "吴江市今泽电器有限公司", "t": "海尔城市旗舰店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 2]]}, {"r": 184, "n": "临沂格美工程有限公司", "t": "海尔城市旗舰店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 185, "n": "河南琴海金马凯旋卡萨帝店", "t": "卡萨帝城市旗舰店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 186, "n": "淄博高新区卫固中亚电器商行", "t": "乡镇海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 187, "n": "洱源县海宏商贸有限公司", "t": "区县海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 188, "n": "化州市铭钥百货贸易有限公司", "t": "乡镇海尔专卖店", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 189, "n": "鄂州市南浦路海创电器经营部(武汉东建材市场店)", "t": "海尔产品专营店(水联网)", "bt": 2, "bn": 2, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["PC端-我的用户-列表-查看详情", 1], ["PC端-我的用户-商机详情页", 1]]}, {"r": 190, "n": "太原市鑫元商贸有限公司(红星美凯龙国金店)", "t": "卡萨帝城市体验中心", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "双端并存", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 2]]}, {"r": 191, "n": "景县忠卫家电门市部", "t": "海尔产品专营店(水联网)", "bt": 2, "bn": 1, "u": 1, "av": 2.0, "tier": "轻度使用", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 2]]}, {"r": 192, "n": "菏泽明舒装饰工程有限公司", "t": "海尔产品专卖店(暖通)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}, {"r": 193, "n": "织金县竟平家用视听设备经营部", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}, {"r": 194, "n": "北京问恒双井京东MALL空调店", "t": "海尔产品专卖店(空调)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-列表-商机信息展开", 1]]}, {"r": 195, "n": "邛崃市高埂街道旭杰电器经营部(个体工商户)", "t": "乡镇海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}, {"r": 196, "n": "宝鸡海丰商贸有限公司高新智家店", "t": "海尔城市旗舰店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["APP-用户经营-页面", 1]]}, {"r": 197, "n": "安丘市永泰家电中心", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-点击添加用户", 1]]}, {"r": 198, "n": "河南海一东欧卡萨帝店", "t": "卡萨帝城市旗舰店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "定制平台2.0PC端", "f": [["APP-用户经营-页面", 1]]}, {"r": 199, "n": "伊金霍洛旗宇翔家用电器销售有限公司", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}, {"r": 200, "n": "元氏县大成商贸有限公司", "t": "海尔综合店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["用户经营—待分配-分配", 1]]}, {"r": 201, "n": "兰州小微张掖市名豪家电滨河新区海尔城市旗舰店", "t": "海尔城市旗舰店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "双端并存", "dzpt": "三翼鸟工作台APP", "f": [["用户经营-打电话", 1]]}, {"r": 202, "n": "孝感海立电器有限公司(北京路店)", "t": "海尔城市旗舰店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}, {"r": 203, "n": "黑龙江海商汇商贸有限公司", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-列表-分配负责人", 1]]}, {"r": 204, "n": "日日宏御龙瀚府智家店", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["用户经营-更多", 1]]}, {"r": 205, "n": "陕西海秦顺全屋采暖1号店", "t": "海尔产品专营店(水联网)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "完全迁移", "dzpt": "", "f": [["PC端-我的用户-列表-修改状态", 1]]}, {"r": 206, "n": "邢台麒凯信息科技有限公司", "t": "海尔产品专卖店(中央空调)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["用户经营—待分配-分配", 1]]}, {"r": 207, "n": "北京盛华博宇商贸有限公司", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "完全迁移", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}, {"r": 208, "n": "兴国县德天商贸有限公司", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}, {"r": 209, "n": "安康市海昌商贸有限公司金秋店", "t": "海尔产品专卖店(厨电)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["用户经营-更多", 1]]}, {"r": 210, "n": "乐安县国信电器商贸", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}, {"r": 211, "n": "广西珩鑫科技有限公司", "t": "海尔产品专卖店(空调)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["用户经营—待分配-分配", 1]]}, {"r": 212, "n": "济宁正之诺商贸有限公司", "t": "乡镇海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["用户经营—待分配-分配", 1]]}, {"r": 213, "n": "珙县盛世如意商贸有限公司巡场店", "t": "区县海尔专卖店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["用户经营-更多", 1]]}, {"r": 214, "n": "澄城县百隆商贸有限责任公司", "t": "海尔综合店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-点击添加用户", 1]]}, {"r": 215, "n": "森垚远洋店", "t": "海尔产品专卖店(空调)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["用户经营—待分配-分配", 1]]}, {"r": 216, "n": "上海之升商贸有限公司", "t": "海尔产品专卖店(空调)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["PC端-我的用户-点击添加用户", 1]]}, {"r": 217, "n": "盐城市大丰正大贸易有限公司", "t": "海尔城市旗舰店", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "完全迁移", "dzpt": "", "f": [["用户经营-更多", 1]]}, {"r": 218, "n": "仁怀市鑫希家电经营部(个体工商户)", "t": "海尔产品专卖店(暖通)", "bt": 1, "bn": 1, "u": 1, "av": 1.0, "tier": "仅浏览", "cat": "新增门店", "dzpt": "", "f": [["APP-用户经营-页面", 1]]}];
+
+let migCat = 'all';
+let migSearch = '';
+let migPage = 1;
+const MIG_PAGE = 20;
+
+function getFilteredMig() {
+  let list = MIG_DATA;
+  if (migCat !== 'all') list = list.filter(function(s){ return s.cat === migCat; });
+  if (migSearch) list = list.filter(function(s){ return s.n.indexOf(migSearch) !== -1; });
+  return list;
+}
+
+function migTierBadge(tier) {
+  var c = tier === '深度使用' ? 'color:var(--accent3)' : tier === '活跃使用' ? 'color:var(--accent)' : tier === '轻度使用' ? 'color:var(--accent4)' : 'color:var(--text-muted)';
+  return '<span style="' + c + ';font-weight:600;font-size:12px">' + tier + '</span>';
+}
+
+function migCatBadge(cat) {
+  var c = cat === '新增门店' ? '#2563eb' : cat === '完全迁移' ? '#ea580c' : '#7c3aed';
+  var bg = cat === '新增门店' ? 'rgba(37,99,235,0.08)' : cat === '完全迁移' ? 'rgba(234,88,12,0.08)' : 'rgba(124,58,237,0.08)';
+  return '<span style="background:' + bg + ';color:' + c + ';padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap">' + cat + '</span>';
+}
+
+function renderMigTable() {
+  var filtered = getFilteredMig();
+  var totalP = Math.max(1, Math.ceil(filtered.length / MIG_PAGE));
+  if (migPage > totalP) migPage = totalP;
+  var start = (migPage - 1) * MIG_PAGE;
+  var page = filtered.slice(start, start + MIG_PAGE);
+
+  var tbody = document.getElementById('migTbody');
+  var html = '';
+  for (var i = 0; i < page.length; i++) {
+    var s = page[i];
+    var topFuncs = s.f.map(function(x){ return x[0] + '(' + x[1] + ')'; }).join(', ');
+    html += '<tr>'
+      + '<td class="num">' + (start + i + 1) + '</td>'
+      + '<td>' + s.n + '</td>'
+      + '<td>' + s.t + '</td>'
+      + '<td class="num">' + s.bt + '</td>'
+      + '<td class="num">' + s.bn + '</td>'
+      + '<td class="num">' + s.u + '</td>'
+      + '<td class="num">' + s.av + '</td>'
+      + '<td>' + migTierBadge(s.tier) + '</td>'
+      + '<td>' + migCatBadge(s.cat) + '</td>'
+      + '<td style="font-size:11px;color:#64748b">' + topFuncs + '</td>'
+      + '</tr>';
+  }
+  tbody.innerHTML = html;
+
+  var pag = document.getElementById('migPagination');
+  var pagHtml = '<span>共 ' + filtered.length + ' 家门店，第 ' + migPage + '/' + totalP + ' 页</span>';
+  pagHtml += '<button onclick="migGoPage(-1)"' + (migPage <= 1 ? ' disabled' : '') + '>&lt; 上一页</button>';
+  pagHtml += '<button onclick="migGoPage(1)"' + (migPage >= totalP ? ' disabled' : '') + '>下一页 &gt;</button>';
+  pag.innerHTML = pagHtml;
+}
+
+function migGoPage(dir) {
+  migPage += dir;
+  renderMigTable();
+}
+
+document.getElementById('migFilters').addEventListener('click', function(e) {
+  if (e.target.classList.contains('rank-filter-btn')) {
+    var btns = document.querySelectorAll('#migFilters .rank-filter-btn');
+    btns.forEach(function(b){ b.classList.remove('active'); });
+    e.target.classList.add('active');
+    migCat = e.target.getAttribute('data-cat');
+    migPage = 1;
+    renderMigTable();
+  }
+});
+
+document.getElementById('migSearch').addEventListener('input', function(e) {
+  migSearch = e.target.value.trim();
+  migPage = 1;
+  renderMigTable();
+});
+
+renderMigTable();
+
+</script>
+</body>
+</html>
