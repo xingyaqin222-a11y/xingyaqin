@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巨商汇端 CRM使用数据分析（6月）</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --accent2: #7c3aed;
+  --accent3: #059669;
+  --accent4: #d97706;
+  --danger: #dc2626;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+.container { max-width:1200px; margin:0 auto; padding:16px; }
+h1 { font-size:22px; font-weight:700; text-align:center; padding:12px 0 4px; }
+.subtitle { text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:12px; }
+.kpi-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.kpi-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 16px; flex:1; min-width:120px; text-align:center; }
+.kpi-card .val { font-size:24px; font-weight:700; }
+.kpi-card .label { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.kpi-card .delta { font-size:10px; margin-top:2px; }
+.kpi-card.blue { border-left:3px solid var(--accent); }
+.kpi-card.blue .val { color:var(--accent); }
+.kpi-card.purple { border-left:3px solid var(--accent2); }
+.kpi-card.purple .val { color:var(--accent2); }
+.kpi-card.green { border-left:3px solid var(--accent3); }
+.kpi-card.green .val { color:var(--accent3); }
+.kpi-card.orange { border-left:3px solid var(--accent4); }
+.kpi-card.orange .val { color:var(--accent4); }
+.section { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px 16px; margin-bottom:10px; }
+.section-title { font-size:15px; font-weight:700; margin-bottom:8px; padding-bottom:6px; border-bottom:2px solid var(--accent); }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.chart-card { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px; }
+.chart-card h3 { font-size:13px; font-weight:600; margin-bottom:4px; color:var(--text); }
+.chart-container { position:relative; height:240px; }
+.chart-container.tall { height:300px; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th { background:#f1f5f9; padding:6px 8px; text-align:left; font-weight:600; color:var(--text); border-bottom:2px solid var(--border); }
+td { padding:5px 8px; border-bottom:1px solid var(--border); }
+tr:hover { background:#f8fafc; }
+.num { text-align:right; font-variant-numeric:tabular-nums; }
+.note { font-size:11px; color:var(--text-muted); margin-bottom:6px; }
+.tier-row { display:flex; gap:6px; margin-bottom:8px; }
+.tier-card { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px; text-align:center; }
+.tier-card .tv { font-size:22px; font-weight:700; }
+.tier-card .tl { font-size:12px; font-weight:600; margin:2px 0; }
+.tier-card .td { font-size:10px; color:var(--text-muted); }
+.tier-deep { color:var(--accent3); }
+.tier-active { color:var(--accent); }
+.tier-light { color:var(--accent4); }
+.tier-passive { color:var(--text-muted); }
+.rank-filter { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+.rank-filter-btn { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:4px 12px; font-size:12px; cursor:pointer; color:var(--text-muted); }
+.rank-filter-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.search-box { width:100%; max-width:300px; padding:4px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; margin-bottom:8px; }
+.pagination { display:flex; gap:4px; justify-content:center; align-items:center; margin-top:8px; font-size:12px; }
+.pagination button { background:var(--card); border:1px solid var(--border); border-radius:4px; padding:3px 10px; cursor:pointer; font-size:12px; }
+.pagination button.active { background:var(--accent); color:#fff; }
+.pagination button:disabled { opacity:0.4; cursor:not-allowed; }
+.insight-box { background:rgba(37,99,235,0.05); border:1px solid rgba(37,99,235,0.15); border-radius:8px; padding:10px 16px; margin-top:8px; font-size:12px; color:#64748b; line-height:1.7; }
+@media(max-width:768px){ .grid-2,.grid-3{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>巨商汇端 CRM使用数据分析（6月）</h1>
+  <div class="subtitle">数据周期：2026-06-01 至 2026-06-30 | 已剔除测试门店「青岛瑞邦家居集成有限公司」（384条记录）</div>
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi-card blue"><div class="val">983</div><div class="label">总访问量（埋点事件·全量）</div></div>
+    <div class="kpi-card blue"><div class="val">599</div><div class="label">有效访问量（剔除测试后）</div><div class="delta" style="color:var(--accent4)">剔除384条（-39.1%）</div></div>
+    <div class="kpi-card purple"><div class="val">58</div><div class="label">独立访问门店数</div></div>
+    <div class="kpi-card green"><div class="val">70</div><div class="label">独立访问用户数</div></div>
+    <div class="kpi-card orange"><div class="val">64</div><div class="label">独立登录用户数</div></div>
+    <div class="kpi-card blue"><div class="val">22</div><div class="label">覆盖小微区域</div></div>
+    <div class="kpi-card purple"><div class="val">9</div><div class="label">功能节点数</div></div>
+  </div>
+
+  <!-- 一、分端来源总览 -->
+  <div class="section">
+    <div class="section-title">一、分端来源总览</div>
+    <div class="grid-2">
+      <div class="chart-card">
+        <h3>各端访问量占比</h3>
+        <div class="chart-container" style="height:200px"><canvas id="chart1"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>分端来源明细</h3>
+        <table>
+          <thead><tr><th>指标</th><th class="num">巨商汇APP</th><th class="num">巨商汇PC端</th></tr></thead>
+          <tbody>
+            <tr><td>访问量</td><td class="num">561</td><td class="num">38</td></tr>
+            <tr><td>占比</td><td class="num">93.7%</td><td class="num">6.3%</td></tr>
+            <tr><td>独立门店数</td><td class="num">48</td><td class="num">11</td></tr>
+            <tr><td>独立用户数</td><td class="num">58</td><td class="num">12</td></tr>
+            <tr><td>登录用户数</td><td class="num">54</td><td class="num">11</td></tr>
+            <tr><td>门店人均访问</td><td class="num">11.7</td><td class="num">3.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="insight-box">APP端贡献93.7%的访问量，覆盖48家门店；PC端仅11家门店使用、38次访问，功能覆盖极窄（仅跟进商机和新建用户），PC端存在感极弱。</div>
+  </div>
+
+  <!-- 二、功能节点分析 -->
+  <div class="section">
+    <div class="section-title">二、功能节点分析</div>
+    <div class="grid-2">
+      <div class="chart-card">
+        <h3>各功能访问量分布</h3>
+        <div class="chart-container"><canvas id="chart2"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>各功能节点独立门店数</h3>
+        <div class="chart-container"><canvas id="chart3"></canvas></div>
+      </div>
+    </div>
+    <table style="margin-top:8px">
+      <thead><tr><th>功能节点</th><th class="num">访问量</th><th class="num">占比</th><th class="num">独立门店数</th><th class="num">独立用户数</th><th class="num">门店覆盖率</th></tr></thead>
+      <tbody>
+        <tr><td>跟进商机</td><td class="num">377</td><td class="num">62.9%</td><td class="num">33</td><td class="num">40</td><td class="num">56.9%</td></tr>
+        <tr><td>新建用户</td><td class="num">167</td><td class="num">27.9%</td><td class="num">20</td><td class="num">28</td><td class="num">34.5%</td></tr>
+        <tr><td>添加协作人及设计师</td><td class="num">25</td><td class="num">4.2%</td><td class="num">10</td><td class="num">11</td><td class="num">17.2%</td></tr>
+        <tr><td>商机搜索</td><td class="num">16</td><td class="num">2.7%</td><td class="num">14</td><td class="num">15</td><td class="num">24.1%</td></tr>
+        <tr><td>分配商机</td><td class="num">6</td><td class="num">1.0%</td><td class="num">4</td><td class="num">4</td><td class="num">6.9%</td></tr>
+        <tr><td>方案设计报价</td><td class="num">2</td><td class="num">0.3%</td><td class="num">1</td><td class="num">1</td><td class="num">1.7%</td></tr>
+        <tr><td>量尺</td><td class="num">2</td><td class="num">0.3%</td><td class="num">2</td><td class="num">2</td><td class="num">3.4%</td></tr>
+        <tr><td>签约（录合同）</td><td class="num">2</td><td class="num">0.3%</td><td class="num">2</td><td class="num">2</td><td class="num">3.4%</td></tr>
+        <tr><td>交付信息</td><td class="num">2</td><td class="num">0.3%</td><td class="num">1</td><td class="num">1</td><td class="num">1.7%</td></tr>
+      </tbody>
+    </table>
+    <div class="insight-box">跟进商机（62.9%）和新建用户（27.9%）两项合计占90.8%，是门店的核心使用场景。商机搜索、分配商机、方案设计报价、量尺、签约、交付信息等下游功能使用率极低，说明门店的CRM使用集中在商机获取和用户创建阶段，尚未形成从商机到交付的完整业务闭环。</div>
+  </div>
+
+  <!-- 三、分端×功能节点交叉分析 -->
+  <div class="section">
+    <div class="section-title">三、分端×功能节点交叉分析</div>
+    <div class="chart-card">
+      <h3>各功能在APP端与PC端的使用对比</h3>
+      <div class="chart-container tall"><canvas id="chart4"></canvas></div>
+    </div>
+    <div class="insight-box">PC端仅支持「跟进商机」(30次)和「新建用户」(8次)两个功能，其余7个功能PC端零使用。APP端是门店使用CRM的绝对主力入口，所有9个功能均有APP端访问记录。</div>
+  </div>
+
+  <!-- 四、门店类型分析 -->
+  <div class="section">
+    <div class="section-title">四、门店类型分析</div>
+    <div class="grid-2">
+      <div class="chart-card">
+        <h3>门店类型独立门店数分布</h3>
+        <div class="chart-container"><canvas id="chart5"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>门店类型访问量分布</h3>
+        <div class="chart-container"><canvas id="chart6"></canvas></div>
+      </div>
+    </div>
+    <div class="insight-box">门店数方面，海尔城市旗舰店(15家)和区县海尔专卖店(13家)占比最高，合计48.3%。但访问量方面，海尔城市体验中心仅2家门店却贡献了337次访问（56.3%），其中昆明海卡北辰财富店单店即325次，是典型的头部标杆门店。三翼鸟全案店(5家/65次)使用活跃度也较高。</div>
+  </div>
+
+  <!-- 五、门店使用排名 -->
+  <div class="section">
+    <div class="section-title">五、门店使用排名</div>
+    <div class="note">使用分级标准：深度使用（业务操作≥20次且功能≥3个）| 活跃使用（≥5次且≥2个功能）| 轻度使用（≥2次）| 仅浏览（≤1次）</div>
+    <div class="tier-row">
+      <div class="tier-card"><div class="tv tier-deep">3</div><div class="tl">深度使用</div><div class="td" style="color:var(--accent3)">5.2%</div></div>
+      <div class="tier-card"><div class="tv tier-active">11</div><div class="tl">活跃使用</div><div class="td" style="color:var(--accent)">19.0%</div></div>
+      <div class="tier-card"><div class="tv tier-light">26</div><div class="tl">轻度使用</div><div class="td" style="color:var(--accent4)">44.8%</div></div>
+      <div class="tier-card"><div class="tv tier-passive">18</div><div class="tl">仅浏览</div><div class="td" style="color:var(--text-muted)">31.0%</div></div>
+    </div>
+    <div class="rank-filter" id="rankFilter">
+      <button class="rank-filter-btn active" data-tier="all">全部 (58)</button>
+      <button class="rank-filter-btn" data-tier="深度使用">深度使用 (3)</button>
+      <button class="rank-filter-btn" data-tier="活跃使用">活跃使用 (11)</button>
+      <button class="rank-filter-btn" data-tier="轻度使用">轻度使用 (26)</button>
+      <button class="rank-filter-btn" data-tier="仅浏览">仅浏览 (18)</button>
+    </div>
+    <input type="text" class="search-box" id="rankSearch" placeholder="搜索门店名称...">
+    <div style="overflow-x:auto">
+      <table id="rankTable">
+        <thead><tr>
+          <th style="width:36px">序号</th><th>门店名称</th><th>门店类型</th><th style="width:60px">小微</th><th class="num" style="width:55px">总访问</th><th class="num" style="width:50px">功能数</th><th class="num" style="width:50px">用户数</th><th class="num" style="width:50px">人均</th><th style="width:70px">使用端</th><th style="width:65px">使用分级</th><th>主要使用功能</th>
+        </tr></thead>
+        <tbody id="rankBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="rankPagination"></div>
+  </div>
+
+  <!-- 六、小微区域分布 -->
+  <div class="section">
+    <div class="section-title">六、小微区域分布</div>
+    <div class="grid-2">
+      <div class="chart-card">
+        <h3>各小微区域访问量</h3>
+        <div class="chart-container tall"><canvas id="chart7"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>各小微区域门店数</h3>
+        <div class="chart-container tall"><canvas id="chart8"></canvas></div>
+      </div>
+    </div>
+    <div class="insight-box">昆明以338次访问量遥遥领先（占56.4%），但仅3家门店，高度集中于昆明海卡北辰财富店。西安覆盖8家门店最多但访问量仅31次，门店数与使用深度不成正比。武汉(6家/41次)、济南(5家/39次)覆盖面和使用量较为均衡。</div>
+  </div>
+
+  <!-- 七、PC端使用深度分析 -->
+  <div class="section">
+    <div class="section-title">七、PC端使用深度分析</div>
+    <div class="grid-2">
+      <div class="chart-card">
+        <h3>PC端功能节点分布</h3>
+        <div class="chart-container"><canvas id="chart9"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>PC端特征摘要</h3>
+        <div style="padding:8px 4px;font-size:13px;line-height:2;color:var(--text-muted)">
+          <div>PC端仅覆盖 <strong style="color:var(--accent2)">11家门店</strong>（APP的22.9%）</div>
+          <div>PC端仅使用 <strong style="color:var(--danger)">2个功能</strong>（跟进商机、新建用户）</div>
+          <div>9个功能中 <strong style="color:var(--danger)">7个PC端零使用</strong></div>
+          <div>PC端门店人均访问 <strong style="color:var(--accent2)">3.5次</strong>（APP为11.7次）</div>
+          <div>PC端访问量仅占 <strong style="color:var(--accent4)">6.3%</strong>（38/599）</div>
+        </div>
+      </div>
+    </div>
+    <div class="insight-box">PC端功能覆盖极窄，商机搜索、添加协作人及设计师、分配商机、方案设计报价、量尺、签约、交付信息等7个功能PC端完全未使用。PC端主要被少数门店用于跟进商机的替代入口，不具备独立使用价值。</div>
+  </div>
+
+</div>
+
+<script>
+// ===== Data =====
+const RANK_DATA = [{"name": "昆明海卡北辰财富海尔城市体验中心", "type": "海尔城市体验中心", "region": "昆明", "total": 325, "funcs": 4, "users": 6, "avg": 54.2, "tier": "深度使用", "topFuncs": "跟进商机(226), 新建用户(94), 添加协作人及设计师(4)", "source": "巨商汇APP"}, {"name": "武汉海日新商贸有限公司(汉西红星美凯龙)", "type": "海尔城市旗舰店", "region": "武汉", "total": 25, "funcs": 2, "users": 2, "avg": 12.5, "tier": "活跃使用", "topFuncs": "跟进商机(16), 新建用户(9)", "source": "巨商汇APP"}, {"name": "众力电器南坪店", "type": "三翼鸟全案店", "region": "重庆", "total": 22, "funcs": 5, "users": 1, "avg": 22.0, "tier": "深度使用", "topFuncs": "跟进商机(15), 新建用户(3), 添加协作人及设计师(2)", "source": "巨商汇APP"}, {"name": "泰安市海联电器有限公司", "type": "三翼鸟全案店", "region": "济南", "total": 21, "funcs": 6, "users": 2, "avg": 10.5, "tier": "深度使用", "topFuncs": "跟进商机(9), 新建用户(6), 方案设计报价(2)", "source": "巨商汇APP"}, {"name": "四川家乐佳电器有限公司", "type": "海尔城市旗舰店", "region": "成都", "total": 19, "funcs": 2, "users": 1, "avg": 19.0, "tier": "活跃使用", "topFuncs": "跟进商机(18), 添加协作人及设计师(1)", "source": "巨商汇APP"}, {"name": "山东新日日顺电器有限公司(银座家居中心店)", "type": "三翼鸟全案店", "region": "济南", "total": 13, "funcs": 2, "users": 1, "avg": 13.0, "tier": "活跃使用", "topFuncs": "跟进商机(12), 添加协作人及设计师(1)", "source": "巨商汇APP"}, {"name": "陕西海惠亿家电器有限公司冰冷体验店", "type": "海尔产品专卖店(冰冷)", "region": "西安", "total": 13, "funcs": 3, "users": 1, "avg": 13.0, "tier": "活跃使用", "topFuncs": "添加协作人及设计师(9), 跟进商机(3), 签约（录合同）(1)", "source": "巨商汇APP"}, {"name": "厦门欣江岩商贸有限公司角美吉家家世界店", "type": "海尔城市体验中心", "region": "福州", "total": 12, "funcs": 2, "users": 2, "avg": 6.0, "tier": "活跃使用", "topFuncs": "新建用户(9), 跟进商机(3)", "source": "巨商汇APP"}, {"name": "重庆市南岸区茶园卡萨帝旗舰店", "type": "卡萨帝城市旗舰店", "region": "重庆", "total": 12, "funcs": 1, "users": 3, "avg": 4.0, "tier": "轻度使用", "topFuncs": "新建用户(12)", "source": "巨商汇APP"}, {"name": "咸宁市恒睿达商贸有限公司(温泉海尔专卖店)", "type": "海尔城市旗舰店", "region": "武汉", "total": 11, "funcs": 2, "users": 1, "avg": 11.0, "tier": "活跃使用", "topFuncs": "跟进商机(10), 新建用户(1)", "source": "巨商汇PC端"}, {"name": "昆明海卡家电有限公司", "type": "海尔城市旗舰店", "region": "昆明", "total": 10, "funcs": 2, "users": 3, "avg": 3.3, "tier": "活跃使用", "topFuncs": "新建用户(6), 跟进商机(4)", "source": "巨商汇APP+巨商汇PC端"}, {"name": "赣州市海明温馨家园店", "type": "海尔产品专卖店(空调)", "region": "南昌", "total": 9, "funcs": 2, "users": 1, "avg": 9.0, "tier": "活跃使用", "topFuncs": "跟进商机(8), 分配商机(1)", "source": "巨商汇APP"}, {"name": "邢台泽瑞辰光海尔智家旗舰店", "type": "三翼鸟全案店", "region": "石家庄", "total": 8, "funcs": 3, "users": 1, "avg": 8.0, "tier": "活跃使用", "topFuncs": "跟进商机(4), 分配商机(3), 添加协作人及设计师(1)", "source": "巨商汇APP"}, {"name": "郑州小微永晟驻马店居然之家卡萨帝体验店", "type": "卡萨帝城市旗舰店", "region": "郑州", "total": 6, "funcs": 2, "users": 1, "avg": 6.0, "tier": "活跃使用", "topFuncs": "添加协作人及设计师(4), 跟进商机(2)", "source": "巨商汇APP"}, {"name": "安丘市彩虹电器有限公司", "type": "区县海尔专卖店", "region": "青岛", "total": 5, "funcs": 1, "users": 1, "avg": 5.0, "tier": "轻度使用", "topFuncs": "跟进商机(5)", "source": "巨商汇PC端"}, {"name": "济宁鸿羿智家科技有限公司(火炬路店)", "type": "海尔产品专营店(水联网)", "region": "济宁", "total": 5, "funcs": 2, "users": 1, "avg": 5.0, "tier": "活跃使用", "topFuncs": "跟进商机(3), 新建用户(2)", "source": "巨商汇APP"}, {"name": "台州市两青年家电有限公司", "type": "海尔产品专卖店(空调)", "region": "宁波", "total": 4, "funcs": 2, "users": 1, "avg": 4.0, "tier": "轻度使用", "topFuncs": "跟进商机(3), 添加协作人及设计师(1)", "source": "巨商汇APP"}, {"name": "西安雷廷智能科技有限公司", "type": "区县海尔专卖店", "region": "西安", "total": 4, "funcs": 2, "users": 1, "avg": 4.0, "tier": "轻度使用", "topFuncs": "跟进商机(3), 新建用户(1)", "source": "巨商汇PC端"}, {"name": "昌乐县商业家电旗舰店", "type": "区县海尔专卖店", "region": "青岛", "total": 4, "funcs": 2, "users": 1, "avg": 4.0, "tier": "轻度使用", "topFuncs": "跟进商机(3), 添加协作人及设计师(1)", "source": "巨商汇APP"}, {"name": "哈尔滨欣创电器有限公司", "type": "区县海尔专卖店", "region": "哈尔滨", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "跟进商机(3)", "source": "巨商汇PC端"}, {"name": "西安雅谦海尔车城店", "type": "海尔城市旗舰店", "region": "西安", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "跟进商机(3)", "source": "巨商汇APP"}, {"name": "通榆县洪石联赢电器有限责任公司", "type": "乡镇海尔专卖店", "region": "长春", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "新建用户(3)", "source": "巨商汇APP"}, {"name": "云南睿畅经贸有限公司(北京路分店)", "type": "海尔城市旗舰店", "region": "昆明", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "新建用户(3)", "source": "巨商汇APP"}, {"name": "欣江岩角美吉家热水器店", "type": "海尔产品专营店(水联网)", "region": "福州", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "新建用户(3)", "source": "巨商汇APP"}, {"name": "亳州御佳道东店", "type": "海尔产品专卖店(空调)", "region": "合肥", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "新建用户(3)", "source": "巨商汇APP"}, {"name": "临夏州百顺电器有限责任公司", "type": "海尔综合店", "region": "兰州", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "跟进商机(3)", "source": "巨商汇PC端"}, {"name": "吉安市吉州区长亿电器店(个体工商户)", "type": "区县海尔专卖店", "region": "南昌", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "新建用户(3)", "source": "巨商汇APP"}, {"name": "西安圣邦曲江体验中心001号店", "type": "卡萨帝城市旗舰店", "region": "西安", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "新建用户(3)", "source": "巨商汇APP"}, {"name": "滨州久联电器有限公司", "type": "区县海尔专卖店", "region": "济南", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "跟进商机(3)", "source": "巨商汇APP"}, {"name": "邢台麒凯信息科技有限公司", "type": "海尔产品专卖店(中央空调)", "region": "石家庄", "total": 3, "funcs": 1, "users": 1, "avg": 3.0, "tier": "轻度使用", "topFuncs": "新建用户(3)", "source": "巨商汇APP"}, {"name": "天津百货商务河北区友谊商场海尔专卖店", "type": "海尔城市旗舰店", "region": "天津", "total": 2, "funcs": 1, "users": 2, "avg": 1.0, "tier": "轻度使用", "topFuncs": "商机搜索(2)", "source": "巨商汇APP"}, {"name": "海城市孤山镇创越电子商行", "type": "乡镇海尔专卖店", "region": "沈阳", "total": 2, "funcs": 1, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "商机搜索(2)", "source": "巨商汇APP"}, {"name": "蒙城县明达家电销售服务有限公司", "type": "区县海尔专卖店", "region": "合肥", "total": 2, "funcs": 1, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "跟进商机(2)", "source": "巨商汇APP"}, {"name": "洛川佑桢捷工贸有限责任公司", "type": "区县海尔专卖店", "region": "西安", "total": 2, "funcs": 1, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "跟进商机(2)", "source": "巨商汇APP"}, {"name": "周至海驰农商西街店", "type": "区县海尔专卖店", "region": "西安", "total": 2, "funcs": 1, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "跟进商机(2)", "source": "巨商汇APP"}, {"name": "榆林市金松商贸有限公司人民西路店", "type": "海尔城市旗舰店", "region": "西安", "total": 2, "funcs": 1, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "跟进商机(2)", "source": "巨商汇APP"}, {"name": "湖北鸿基锐创贸易有限公司(人民广场海尔专卖店)", "type": "海尔城市旗舰店", "region": "武汉", "total": 2, "funcs": 2, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "添加协作人及设计师(1), 分配商机(1)", "source": "巨商汇APP"}, {"name": "韩城市海钰诚滢家电销售城", "type": "乡镇海尔专卖店", "region": "西安", "total": 2, "funcs": 1, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "跟进商机(2)", "source": "巨商汇APP"}, {"name": "百合山庄店", "type": "海尔城市旗舰店", "region": "沈阳", "total": 2, "funcs": 1, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "跟进商机(2)", "source": "巨商汇APP"}, {"name": "岳阳县正飞电器行长城市场店", "type": "区县海尔专卖店", "region": "长沙", "total": 2, "funcs": 1, "users": 1, "avg": 2.0, "tier": "轻度使用", "topFuncs": "跟进商机(2)", "source": "巨商汇APP"}, {"name": "长沙顺逛电器贸易有限公司三湘店", "type": "区县海尔专卖店", "region": "长沙", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "新建用户(1)", "source": "巨商汇PC端"}, {"name": "阳江市江城区世纪电器商行(个体工商户)", "type": "乡镇海尔专卖店", "region": "广州", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "广州海粤电器有限公司", "type": "海尔城市旗舰店", "region": "广州", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "襄阳宝利丰电子科技有限公司", "type": "海尔产品专卖店(净水)", "region": "武汉", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "新建用户(1)", "source": "巨商汇PC端"}, {"name": "大方县盛宏家电经营有限公司", "type": "区县海尔专卖店", "region": "贵州", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "新建用户(1)", "source": "巨商汇PC端"}, {"name": "丰泽区可兴电器商行", "type": "海尔综合店", "region": "福州", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "唐山宝成工贸有限公司", "type": "海尔综合店", "region": "天津", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "跟进商机(1)", "source": "巨商汇PC端"}, {"name": "和美云商新添寨店", "type": "海尔城市旗舰店", "region": "贵州", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "崇阳县隆诚商贸有限公司(电力大道海尔专卖店)", "type": "海尔城市旗舰店", "region": "武汉", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "泰安三联家用电器有限公司(上高海尔专卖店)", "type": "海尔城市旗舰店", "region": "济南", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "湖北瑞东贸易集团有限责任公司(光谷居然之家卡萨帝旗舰店)", "type": "卡萨帝城市旗舰店", "region": "武汉", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "跟进商机(1)", "source": "巨商汇APP"}, {"name": "赣州五湖电器有限公司", "type": "海尔城市旗舰店", "region": "南昌", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "跟进商机(1)", "source": "巨商汇PC端"}, {"name": "河南海成三翼鸟城市体验中心", "type": "三翼鸟城市体验中心", "region": "郑州", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "欣江岩第六空间店", "type": "卡萨帝高端厨电店", "region": "福州", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "跟进商机(1)", "source": "巨商汇APP"}, {"name": "山东新日日顺电器有限公司(红星美凯龙店)", "type": "三翼鸟全案店", "region": "济南", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "天台县平桥家电有限公司", "type": "乡镇海尔专卖店", "region": "宁波", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "邯郸市永年区天顺经贸有限公司天正店", "type": "卡萨帝城市旗舰店", "region": "石家庄", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}, {"name": "青岛洲际通香港中路银座店", "type": "区县海尔专卖店", "region": "青岛", "total": 1, "funcs": 1, "users": 1, "avg": 1.0, "tier": "仅浏览", "topFuncs": "商机搜索(1)", "source": "巨商汇APP"}];
+
+// ===== Chart defaults =====
+Chart.defaults.color = '#64748b';
+Chart.defaults.borderColor = '#e2e8f0';
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+const COLORS = {
+  app: '#2563eb',
+  pc: '#7c3aed',
+  deep: '#059669',
+  active: '#2563eb',
+  light: '#d97706',
+  passive: '#94a3b8',
+  palette: ['#2563eb','#7c3aed','#059669','#d97706','#dc2626','#0891b2','#9333ea','#ca8a04','#475569']
+};
+
+// 1. 分端来源饼图
+new Chart(document.getElementById('chart1'), {
+  type: 'doughnut',
+  data: {
+    labels: ['巨商汇APP', '巨商汇PC端'],
+    datasets: [{ data: [561, 38], backgroundColor: [COLORS.app, COLORS.pc], borderWidth: 0 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+});
+
+// 2. 功能访问量柱状图
+new Chart(document.getElementById('chart2'), {
+  type: 'bar',
+  data: {
+    labels: ['跟进商机','新建用户','添加协作人','商机搜索','分配商机','方案设计','量尺','签约','交付信息'],
+    datasets: [{ data: [377,167,25,16,6,2,2,2,2], backgroundColor: COLORS.palette, borderRadius: 3 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 }, maxRotation: 45 } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' } } } }
+});
+
+// 3. 功能独立门店数
+new Chart(document.getElementById('chart3'), {
+  type: 'bar',
+  data: {
+    labels: ['跟进商机','新建用户','商机搜索','添加协作人','分配商机','量尺','签约','方案设计','交付信息'],
+    datasets: [{ data: [33,20,14,10,4,2,2,1,1], backgroundColor: COLORS.palette, borderRadius: 3 }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } } } }
+});
+
+// 4. 分端×功能交叉
+new Chart(document.getElementById('chart4'), {
+  type: 'bar',
+  data: {
+    labels: ['跟进商机','新建用户','添加协作人','商机搜索','分配商机','方案设计','量尺','签约','交付信息'],
+    datasets: [
+      { label: '巨商汇APP', data: [347,159,25,16,6,2,2,2,2], backgroundColor: COLORS.app, borderRadius: 2 },
+      { label: '巨商汇PC端', data: [30,8,0,0,0,0,0,0,0], backgroundColor: COLORS.pc, borderRadius: 2 }
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' } } } }
+});
+
+// 5. 门店类型门店数
+new Chart(document.getElementById('chart5'), {
+  type: 'bar',
+  data: {
+    labels: ['海尔城市旗舰','区县海尔专卖','卡萨帝城市旗舰','乡镇海尔专卖','三翼鸟全案店','产品专卖(空调)','海尔综合店','海尔城市体验','产品专营(水联)','产品专卖(冰冷)','产品专卖(净水)','三翼鸟城市体验','卡萨帝高端厨电','产品专卖(中央空调)'],
+    datasets: [{ data: [15,13,5,5,5,3,3,2,2,1,1,1,1,1], backgroundColor: COLORS.palette, borderRadius: 3 }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 2 } } } }
+});
+
+// 6. 门店类型访问量
+new Chart(document.getElementById('chart6'), {
+  type: 'bar',
+  data: {
+    labels: ['海尔城市体验','三翼鸟全案店','海尔城市旗舰','区县海尔专卖','卡萨帝城市旗舰','产品专卖(空调)','乡镇海尔专卖','产品专营(水联)','海尔综合店','产品专卖(冰冷)','产品专卖(中央空调)','产品专卖(净水)','三翼鸟城市体验','卡萨帝高端厨电'],
+    datasets: [{ data: [337,65,84,33,23,16,9,8,5,13,3,1,1,1], backgroundColor: COLORS.palette, borderRadius: 3 }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } } } }
+});
+
+// 7. 小微区域访问量
+new Chart(document.getElementById('chart7'), {
+  type: 'bar',
+  data: {
+    labels: ['昆明','武汉','济南','重庆','西安','成都','福州','南昌','石家庄','青岛','郑州','宁波','合肥','济宁','沈阳','哈尔滨','天津','长沙','长春','兰州','广州','贵州'],
+    datasets: [{ data: [338,41,39,34,31,19,17,13,12,10,7,5,5,5,4,3,3,3,3,3,2,2], backgroundColor: COLORS.app, borderRadius: 2 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 8 }, maxRotation: 45 } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' } } } }
+});
+
+// 8. 小微区域门店数
+new Chart(document.getElementById('chart8'), {
+  type: 'bar',
+  data: {
+    labels: ['西安','武汉','济南','福州','昆明','青岛','南昌','石家庄','重庆','宁波','合肥','沈阳','天津','长沙','广州','贵州','成都','哈尔滨','济宁','兰州','长春','郑州'],
+    datasets: [{ data: [8,6,5,4,3,3,3,3,2,2,2,2,2,2,2,2,1,1,1,1,1,1], backgroundColor: COLORS.accent3, borderRadius: 2 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 8 }, maxRotation: 45 } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } } } }
+});
+
+// 9. PC端功能
+new Chart(document.getElementById('chart9'), {
+  type: 'bar',
+  data: {
+    labels: ['跟进商机','新建用户'],
+    datasets: [{ data: [30, 8], backgroundColor: [COLORS.pc, COLORS.app], borderRadius: 3 }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } } } }
+});
+
+// ===== 门店使用排名交互表 =====
+var curTier = 'all';
+var curSearch = '';
+var curPage = 1;
+var PAGE_SIZE = 20;
+
+function tierClass(tier) {
+  if (tier === '深度使用') return 'tier-deep';
+  if (tier === '活跃使用') return 'tier-active';
+  if (tier === '轻度使用') return 'tier-light';
+  return 'tier-passive';
+}
+function tierColor(tier) {
+  if (tier === '深度使用') return 'color:var(--accent3)';
+  if (tier === '活跃使用') return 'color:var(--accent)';
+  if (tier === '轻度使用') return 'color:var(--accent4)';
+  return 'color:var(--text-muted)';
+}
+
+function renderRank() {
+  var filtered = RANK_DATA.filter(function(r) {
+    return (curTier === 'all' || r.tier === curTier) &&
+           (curSearch === '' || r.name.toLowerCase().indexOf(curSearch.toLowerCase()) >= 0);
+  });
+  var totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
+  if (curPage > totalPages) curPage = totalPages;
+  var start = (curPage - 1) * PAGE_SIZE;
+  var pageData = filtered.slice(start, start + PAGE_SIZE);
+
+  var html = '';
+  pageData.forEach(function(r, i) {
+    var idx = start + i + 1;
+    html += '<tr>' +
+      '<td class="num">' + idx + '</td>' +
+      '<td>' + (idx <= 3 ? '<strong>' + r.name + '</strong>' : r.name) + '</td>' +
+      '<td style="font-size:11px;color:#64748b">' + r.type + '</td>' +
+      '<td style="font-size:11px">' + r.region + '</td>' +
+      '<td class="num"><strong>' + r.total + '</strong></td>' +
+      '<td class="num">' + r.funcs + '</td>' +
+      '<td class="num">' + r.users + '</td>' +
+      '<td class="num">' + r.avg + '</td>' +
+      '<td style="font-size:11px">' + r.source + '</td>' +
+      '<td style="' + tierColor(r.tier) + ';font-weight:600;font-size:11px">' + r.tier + '</td>' +
+      '<td style="font-size:11px;color:#64748b">' + r.topFuncs + '</td>' +
+      '</tr>';
+  });
+  if (html === '') html = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px">无匹配数据</td></tr>';
+  document.getElementById('rankBody').innerHTML = html;
+
+  // Pagination
+  var pgHtml = '';
+  pgHtml += '<button onclick="goPage(1)" ' + (curPage <= 1 ? 'disabled' : '') + '>首页</button>';
+  pgHtml += '<button onclick="goPage(' + (curPage - 1) + ')" ' + (curPage <= 1 ? 'disabled' : '') + '>上一页</button>';
+  pgHtml += '<span style="margin:0 8px">第 ' + curPage + '/' + totalPages + ' 页（共' + filtered.length + '家）</span>';
+  pgHtml += '<button onclick="goPage(' + (curPage + 1) + ')" ' + (curPage >= totalPages ? 'disabled' : '') + '>下一页</button>';
+  pgHtml += '<button onclick="goPage(' + totalPages + ')" ' + (curPage >= totalPages ? 'disabled' : '') + '>末页</button>';
+  document.getElementById('rankPagination').innerHTML = pgHtml;
+}
+
+function goPage(p) { curPage = p; renderRank(); }
+
+document.getElementById('rankFilter').addEventListener('click', function(e) {
+  if (e.target.classList.contains('rank-filter-btn')) {
+    document.querySelectorAll('.rank-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    e.target.classList.add('active');
+    curTier = e.target.dataset.tier;
+    curPage = 1;
+    renderRank();
+  }
+});
+
+document.getElementById('rankSearch').addEventListener('input', function(e) {
+  curSearch = e.target.value;
+  curPage = 1;
+  renderRank();
+});
+
+renderRank();
+</script>
+</body>
+</html>
