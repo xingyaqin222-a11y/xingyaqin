@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM 上半年进展与下半年方向</title>
+<style>
+  :root{
+    --page-bg:#E9EBEF;
+    --surface:#FFFFFF;
+    --border:#E4E7EC;
+    --ink:#1A1F2B;
+    --ink-soft:#5B6474;
+    --ink-faint:#8A93A3;
+    --brand:#2F5AA8;
+    --brand-deep:#1F3D66;
+    --brand-soft:#EAF0FA;
+    --positive:#1F8A70;
+    --positive-soft:#E7F4F0;
+    --warning:#C9820A;
+    --warning-soft:#FAF0E4;
+    --danger:#D14343;
+    --danger-soft:#FBEAEA;
+    --neutral:#8B93A1;
+    --neutral-soft:#EEF0F3;
+    --radius:20px;
+    --maxw:1120px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--page-bg);
+    color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-family:"Helvetica Neue",Arial,sans-serif; font-variant-numeric:tabular-nums;}
+
+  /* ---------- Nav ---------- */
+  .topnav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(233,235,239,0.9);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .topnav-inner{
+    max-width:var(--maxw); margin:0 auto; padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .brand-mark{font-size:14.5px; font-weight:700; color:var(--ink); white-space:nowrap;}
+  .brand-mark span{color:var(--brand);}
+  .nav-links{display:flex; gap:2px;}
+  .nav-links a{
+    font-size:13px; color:var(--ink-soft); text-decoration:none;
+    padding:6px 12px; border-radius:20px; transition:all .2s; white-space:nowrap;
+  }
+  .nav-links a:hover{background:#fff; color:var(--ink);}
+  .nav-links a.active{background:var(--brand); color:#fff; font-weight:600;}
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:32px 24px 20px;}
+
+  /* ---------- Slide card ---------- */
+  .slide{
+    background:var(--surface);
+    border-radius:var(--radius);
+    box-shadow:0 2px 6px rgba(20,30,60,0.05), 0 10px 30px rgba(20,30,60,0.045);
+    padding:44px 48px;
+    margin-bottom:28px;
+  }
+  .slide-title-row{display:flex; align-items:baseline; gap:12px; margin-bottom:14px;}
+  .slide-number{font-size:30px; font-weight:800; color:var(--brand); line-height:1;}
+  .slide-number.slide-number-tag{font-size:19px; letter-spacing:0.3px;}
+  .slide-title{font-size:23px; font-weight:800; color:var(--ink); line-height:1.3;}
+  .slide-sub{font-size:13.5px; color:var(--ink-soft); max-width:640px; margin:0 0 22px;}
+  .slide-divider{height:1px; background:var(--border); margin-bottom:3px;}
+  .slide-divider-accent{height:3px; width:64px; background:var(--brand); border-radius:2px; margin-bottom:28px;}
+
+  .prose{font-size:14px; color:var(--ink-soft); margin-bottom:0;}
+  .prose b{color:var(--ink);}
+  .prose + .prose{margin-top:14px;}
+
+  /* ---------- Cover ---------- */
+  .cover{
+    background:linear-gradient(135deg,var(--brand-deep) 0%, var(--brand) 100%);
+    border-radius:var(--radius);
+    padding:52px 48px;
+    margin-bottom:28px;
+    color:#fff;
+    box-shadow:0 12px 34px rgba(31,61,102,0.28);
+  }
+  .cover-eyebrow{font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; opacity:0.75; margin-bottom:16px;}
+  .cover h1{font-size:29px; line-height:1.5; margin:0 0 16px; font-weight:800;}
+  .cover-lede{font-size:14px; opacity:0.88; max-width:600px; margin:0 0 30px;}
+
+  .pos-banner{
+    display:flex; align-items:stretch; border-radius:14px; overflow:hidden;
+    background:rgba(255,255,255,0.08);
+  }
+  .pos-seg{padding:20px 24px; display:flex; flex-direction:column; justify-content:center;}
+  .pos-seg .pos-label{font-size:11px; font-weight:700; letter-spacing:1.5px; opacity:0.75; margin-bottom:4px;}
+  .pos-seg .pos-text{font-size:14.5px; font-weight:700;}
+  .pos-seg.base{background:rgba(255,255,255,0.16); flex:1.1; clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%);}
+  .pos-seg.ext{background:rgba(255,255,255,0.06); flex:1; padding-left:34px;}
+
+  /* ---------- Stat row ---------- */
+  .stat-strip{display:flex; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:26px;}
+  .stat-cell{flex:1; padding:16px 20px 16px 0;}
+  .stat-cell + .stat-cell{border-left:1px solid var(--border); padding-left:20px;}
+  .stat-label{font-size:12.5px; color:var(--ink-soft); margin-bottom:8px; font-weight:600;}
+  .stat-main{display:flex; align-items:baseline; gap:7px; margin-bottom:6px;}
+  .stat-value{font-size:24px; font-weight:800; color:var(--ink);}
+  .stat-target{font-size:11.5px; color:var(--ink-faint);}
+  .stat-foot{font-size:11.5px; color:var(--ink-faint); display:flex; justify-content:space-between;}
+  .stat-rate{font-weight:700; color:var(--positive);}
+
+  /* ---------- Deck table (mirrors reference screenshot) ---------- */
+  .table-wrap{border-radius:12px; overflow:hidden; border:1px solid var(--border); margin-bottom:6px;}
+  table.deck-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .deck-table thead th{
+    background:var(--brand-deep); color:#fff; font-weight:700; font-size:12px;
+    padding:12px 16px; text-align:left; white-space:nowrap;
+  }
+  .deck-table tbody td{padding:12px 16px; border-bottom:1px solid var(--border); color:var(--ink-soft); vertical-align:top;}
+  .deck-table tbody tr:last-child td{border-bottom:none;}
+  .deck-table tbody tr:hover{background:#FAFBFC;}
+  .deck-table td.idx{color:var(--ink-faint); width:32px;}
+  .deck-table td.strong{color:var(--ink); font-weight:600;}
+
+  .badge{
+    display:inline-flex; align-items:center; justify-content:center; min-width:30px;
+    padding:3px 10px; border-radius:14px; font-size:11.5px; font-weight:800; color:#fff; white-space:nowrap;
+  }
+  .badge.high{background:var(--danger);}
+  .badge.mid{background:var(--warning);}
+  .badge.low{background:var(--positive);}
+
+  .status-text{font-weight:600; font-size:12.5px;}
+  .status-text.done{color:var(--positive);}
+  .status-text.review{color:var(--warning);}
+  .status-text.planning{color:var(--ink-faint);}
+
+  .callout{
+    display:flex; gap:14px; align-items:flex-start; background:var(--warning-soft);
+    border-left:4px solid var(--warning); border-radius:10px; padding:16px 20px; margin-top:20px;
+    font-size:12.5px; color:var(--ink-soft);
+  }
+  .callout .icon{
+    flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--warning); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; margin-top:1px;
+  }
+  .callout b{color:var(--ink);}
+
+  /* ---------- Category chart ---------- */
+  .cat-row{display:flex; align-items:center; gap:14px; padding:9px 0;}
+  .cat-row-label{width:180px; flex-shrink:0; font-size:12.5px; font-weight:600; color:var(--ink);}
+  .cat-row-bar{flex:1; height:14px; background:var(--neutral-soft); border-radius:4px; overflow:hidden;}
+  .cat-row-bar-fill{height:100%; background:var(--brand-soft); border-radius:4px;}
+  .cat-row-bar-fill .high-part{height:100%; background:var(--brand); float:left;}
+  .cat-row-count{width:100px; flex-shrink:0; text-align:right; font-size:11.5px; color:var(--ink-faint);}
+  .cat-row-count b{color:var(--ink); font-weight:700;}
+  .cat-caption{font-size:12px; color:var(--ink-faint); margin-top:12px;}
+
+  .cat-block{border-bottom:1px solid var(--border);}
+  .cat-block:last-child{border-bottom:none;}
+  .cat-row-click{cursor:pointer; user-select:none; padding:13px 4px;}
+  .cat-row-click:hover .cat-row-label{color:var(--brand);}
+  .chevron{flex-shrink:0; font-size:12px; color:var(--ink-faint); transition:transform .25s;}
+  .cat-block.open .chevron{transform:rotate(180deg); color:var(--brand);}
+  .cat-body{max-height:0; overflow:hidden; transition:max-height .3s ease;}
+  .cat-body-inner{padding:2px 4px 16px 4px;}
+  table.deck-table.mini{font-size:12.5px;}
+  table.deck-table.mini td{padding:9px 10px;}
+  table.deck-table.mini td:first-child{color:var(--ink-soft); font-weight:500;}
+  table.deck-table.mini td:nth-child(2){width:60px;}
+  table.deck-table.mini td:nth-child(3){width:170px; white-space:nowrap;}
+  table.deck-table.mini tr:first-child td{border-top:1px solid var(--border);}
+
+  /* ---------- Launched list ---------- */
+  .simple-list{margin-top:18px;}
+  .simple-row{display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid var(--border);}
+  .simple-row:last-child{border-bottom:none;}
+  .simple-check{
+    flex-shrink:0; width:20px; height:20px; border-radius:50%; background:var(--positive-soft);
+    color:var(--positive); display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800; margin-top:2px;
+  }
+  .simple-row b{font-size:13.5px; font-weight:700;}
+  .simple-row p{font-size:12.5px; color:var(--ink-soft); margin:2px 0 0;}
+
+  /* ---------- Flagship / demo ---------- */
+  .flagship-tag{
+    display:inline-block; font-size:11px; font-weight:700; color:var(--positive); background:var(--positive-soft);
+    padding:3px 10px; border-radius:10px; margin-left:10px; vertical-align:middle;
+  }
+  .flagship-tag.warn{color:var(--warning); background:var(--warning-soft);}
+
+  .demo-frame-wrap{
+    border:1px solid var(--border); border-radius:14px; overflow:hidden; margin:22px 0 24px;
+    background:#f0f1f3;
+  }
+  .demo-frame-bar{
+    display:flex; align-items:center; justify-content:space-between; padding:9px 16px;
+    background:var(--ink); color:#fff; font-size:12px;
+  }
+  .demo-frame-bar a{color:#fff; text-decoration:none; opacity:0.85; font-weight:600;}
+  .demo-frame-bar a:hover{opacity:1; text-decoration:underline;}
+  iframe.demo-frame{width:100%; height:640px; border:none; display:block; background:#fff;}
+
+  .evidence-box{
+    background:var(--bg-soft,#F5F6F8); background:var(--neutral-soft); border-left:3px solid var(--brand); border-radius:8px;
+    padding:14px 18px; margin:16px 0; font-size:12.5px; color:var(--ink-soft);
+  }
+  .evidence-box b{color:var(--ink);}
+  .flow-row{display:flex; align-items:center; gap:10px; margin:18px 0 4px; font-size:13px; flex-wrap:wrap;}
+  .flow-pill{background:var(--brand-soft); color:var(--brand); padding:6px 14px; border-radius:20px; font-weight:600; font-size:12px;}
+  .flow-arrow{color:var(--ink-faint);}
+
+  footer{padding:20px 24px 56px; text-align:center; font-size:12px; color:var(--ink-faint);}
+
+  @media (max-width:760px){
+    .slide, .cover{padding:30px 22px;}
+    .stat-strip{flex-direction:column;}
+    .stat-cell + .stat-cell{border-left:none; border-top:1px solid var(--border); padding-left:0; margin-top:12px; padding-top:12px;}
+    .pos-banner{flex-direction:column;}
+    .pos-seg.base{clip-path:none;}
+    .pos-seg.ext{padding-left:22px;}
+    .cover h1{font-size:22px;}
+    .nav-links{display:none;}
+    .cat-row{flex-wrap:wrap;}
+    .cat-row-label{width:100%;}
+    .cat-row-count{width:auto; text-align:left;}
+    .table-wrap{overflow-x:auto;}
+    table.deck-table{min-width:640px;}
+    iframe.demo-frame{height:480px;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="brand-mark">CRM<span>·</span>下半年方向同步</div>
+    <div class="nav-links" id="navLinks">
+      <a href="#positioning" data-target="positioning">定位</a>
+      <a href="#progress" data-target="progress">进展与问题</a>
+      <a href="#plan" data-target="plan">下半年规划</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ============ 顶部标题板块 · 核心定位 ============ -->
+  <section id="positioning">
+    <div class="cover">
+      <div class="cover-eyebrow">CRM 系统 · 2026 H1 复盘与 H2 方向</div>
+      <h1>从定制业务工具，走向长链路家电用户跟进平台</h1>
+      <p class="cover-lede">CRM 最初服务于柜电门店的定制业务全流程管理，上半年开始向长链路家电场景延伸——两类业务本质上都是"长周期、需要持续跟进"的经营模式，只是品类不同。</p>
+      <div class="pos-banner">
+        <div class="pos-seg base">
+          <div class="pos-label">基础定位</div>
+          <div class="pos-text">服务柜电门店定制业务用户全流程管理</div>
+        </div>
+        <div class="pos-seg ext">
+          <div class="pos-label">拓展定位</div>
+          <div class="pos-text">长链路家电用户跟进管理</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 进展与问题 ============ -->
+  <section id="progress">
+
+    <div class="slide">
+      <div class="slide-title-row"><span class="slide-number num">01</span><span class="slide-title">上半年核心数据</span></div>
+      <div class="slide-divider"></div><div class="slide-divider-accent"></div>
+      <p class="slide-sub">核心指标基本达成目标，但 2.0 / 非 2.0 门店在实际使用中仍有明显堵点。</p>
+
+      <div class="stat-strip">
+        <div class="stat-cell">
+          <div class="stat-label">用户转化数</div>
+          <div class="stat-main"><span class="stat-value num">7,110</span><span class="stat-target num">目标 7,100</span></div>
+          <div class="stat-foot"><span>同期 5,927 人</span><span class="stat-rate num">100%</span></div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">使用门店数</div>
+          <div class="stat-main"><span class="stat-value num">3,082</span><span class="stat-target num">目标 3,000</span></div>
+          <div class="stat-foot"><span>同期 2,455 家</span><span class="stat-rate num">103%</span></div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">自建客资占比</div>
+          <div class="stat-main"><span class="stat-value num">14%</span><span class="stat-target num">695家 / 5,556条</span></div>
+          <div class="stat-foot"><span>同期占比 16%</span><span class="stat-rate num" style="color:var(--ink-faint)">略降</span></div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="deck-table">
+          <thead><tr><th>门店类型</th><th>使用情况</th><th>核心堵点</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="strong">2.0 门店</td>
+              <td>数据互通已实现，上线巨商汇后仅 148 家使用</td>
+              <td>87% 仍留在原端，主要因操作习惯和权限问题；培训依赖微信群，触达不足</td>
+            </tr>
+            <tr>
+              <td class="strong">非 2.0 门店</td>
+              <td>巨商汇纯新增 159 家（11%），原端新增仍占大头（40%）</td>
+              <td>账号鉴权体系未拉通；意向用户最多只愿留微信，但 CRM 手机号必填</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="slide">
+      <div class="slide-title-row"><span class="slide-number num">02</span><span class="slide-title">已上线举措</span></div>
+      <div class="slide-divider"></div><div class="slide-divider-accent"></div>
+      <p class="slide-sub">五项举措已在上半年按时间线完成上线。</p>
+      <div class="simple-list">
+        <div class="simple-row">
+          <div class="simple-check">✓</div>
+          <div><b>家居小程序与 CRM 用户数据互通</b><p>打通用户、量尺、合同、订单及历史数据同步，避免重复录入和多方信息不一致，门店操作便捷无冗余，同时支撑家居 / 三翼鸟总部高效统筹业务 <span class="num">· 3/16 上线</span></p></div>
+        </div>
+        <div class="simple-row">
+          <div class="simple-check">✓</div>
+          <div><b>CRM 扩展巨商汇端口（APP + PC）</b><p>门店多端简易操作，对接巨商汇零售开单可快捷跳转，家电门店也可使用 CRM，一个端口完成用户跟进与下单 <span class="num">· 4/27 上线</span></p></div>
+        </div>
+        <div class="simple-row">
+          <div class="simple-check">✓</div>
+          <div><b>CRM 体验按巨商汇规范迭代</b><p>UI/UE 全面对齐、新建用户流程优化、来源顺序调整 <span class="num">· 7/6 上线</span></p></div>
+        </div>
+        <div class="simple-row">
+          <div class="simple-check">✓</div>
+          <div><b>PC 端浏览体验修复</b><p>修复"用户全流程"翻页状态丢失问题 <span class="num">· 7/6 上线</span></p></div>
+        </div>
+        <div class="simple-row">
+          <div class="simple-check">✓</div>
+          <div><b>短信提醒内容修正</b><p>原提醒路径指向三翼鸟工作台，非 2.0 门店用户无法理解，已修正 <span class="num">· 7/6 上线</span></p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide">
+      <div class="slide-title-row"><span class="slide-number num">03</span><span class="slide-title">问题诊断</span></div>
+      <div class="slide-divider"></div><div class="slide-divider-accent"></div>
+      <p class="slide-sub">门店终端反馈渠道收集，共 <b style="color:var(--ink)">25</b> 条问题，归为 5 类；点击每一类可展开查看明细问题。</p>
+
+      <div class="cat-chart">
+
+        <div class="cat-block" data-cat>
+          <div class="cat-row cat-row-click" onclick="toggleCat(this)">
+            <div class="cat-row-label">用户录入与识别门槛</div>
+            <div class="cat-row-bar"><div class="cat-row-bar-fill" style="width:37.5%"><div class="high-part" style="width:66.7%"></div></div></div>
+            <div class="cat-row-count"><b class="num">3</b> 条 · <span class="num">2</span> 条高</div>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="cat-body">
+            <div class="cat-body-inner">
+              <table class="deck-table mini">
+                <tbody>
+                  <tr><td class="strong">手机号必填导致意向客户流失</td><td><span class="badge high">高</span></td><td><span class="status-text review">方案调整中</span></td></tr>
+                  <tr><td class="strong">录入信息项过重，影响使用意愿</td><td><span class="badge high">高</span></td><td><span class="status-text planning">需求梳理中</span></td></tr>
+                  <tr><td class="strong">姓名录入规范调整（支持小写字母，适配英文名用户）</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block" data-cat>
+          <div class="cat-row cat-row-click" onclick="toggleCat(this)">
+            <div class="cat-row-label">页面体验与操作效率</div>
+            <div class="cat-row-bar"><div class="cat-row-bar-fill" style="width:100%"><div class="high-part" style="width:50%"></div></div></div>
+            <div class="cat-row-count"><b class="num">8</b> 条 · <span class="num">4</span> 条高</div>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="cat-body">
+            <div class="cat-body-inner">
+              <table class="deck-table mini">
+                <tbody>
+                  <tr><td class="strong">列表默认展示流失用户，查找困难</td><td><span class="badge high">高</span></td><td><span class="status-text planning">需求梳理中</span></td></tr>
+                  <tr><td class="strong">增加自动跟进提示，减少漏跟进</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                  <tr><td class="strong">跟进记录文案与实际业务场景对齐</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                  <tr><td class="strong">支持一键批量交接负责人 / 设计师 / 门店</td><td><span class="badge low">低</span></td><td><span class="status-text planning">部分用户报错，暂缓</span></td></tr>
+                  <tr><td class="strong">三翼鸟工作台入口统一命名</td><td><span class="badge low">低</span></td><td><span class="status-text planning">涉及发版流程，周期长</span></td></tr>
+                </tbody>
+              </table>
+              <p class="cat-caption" style="margin-top:10px;">另有 3 条已上线，见「已上线举措」</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block" data-cat>
+          <div class="cat-row cat-row-click" onclick="toggleCat(this)">
+            <div class="cat-row-label">系统对接与数据准确性</div>
+            <div class="cat-row-bar"><div class="cat-row-bar-fill" style="width:50%"><div class="high-part" style="width:50%"></div></div></div>
+            <div class="cat-row-count"><b class="num">4</b> 条 · <span class="num">2</span> 条高</div>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="cat-body">
+            <div class="cat-body-inner">
+              <table class="deck-table mini">
+                <tbody>
+                  <tr><td class="strong">接入巨商汇订单实时数据，替代现有 T-1 定时同步，提升时效与准确性</td><td><span class="badge high">高</span></td><td><span class="status-text review">需求评审中</span></td></tr>
+                  <tr><td class="strong">导出表格升级为获客-跟进-设计-量尺-订单-交付全链路内容，替代仅导出 CRM 自有数据</td><td><span class="badge high">高</span></td><td><span class="status-text review">PRD 待评审</span></td></tr>
+                  <tr><td class="strong">用户标签能力接入，对接集团标签体系</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                  <tr><td class="strong">用户经营看板迁移升级</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block" data-cat>
+          <div class="cat-row cat-row-click" onclick="toggleCat(this)">
+            <div class="cat-row-label">账号权限与多端协同</div>
+            <div class="cat-row-bar"><div class="cat-row-bar-fill" style="width:75%"><div class="high-part" style="width:16.7%"></div></div></div>
+            <div class="cat-row-count"><b class="num">6</b> 条 · <span class="num">1</span> 条高</div>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="cat-body">
+            <div class="cat-body-inner">
+              <table class="deck-table mini">
+                <tbody>
+                  <tr><td class="strong">巨商汇端交付详情仅能查看，不能分享</td><td><span class="badge high">高</span></td><td><span class="status-text review">PRD 待评审</span></td></tr>
+                  <tr><td class="strong">客户权限导出表格支持明文电话</td><td><span class="badge mid">中</span></td><td><span class="status-text review">涉及协调法务</span></td></tr>
+                  <tr><td class="strong">增加管理角色，支持多门店数据查看与导出</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                  <tr><td class="strong">巨商汇账号权限融合拉通</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                  <tr><td class="strong">巨商汇端支持 VR 方案分享</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                  <tr><td class="strong">用户管理入口集中</td><td><span class="badge low">低</span></td><td><span class="status-text planning">涉及多部门，待沟通</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block" data-cat>
+          <div class="cat-row cat-row-click" onclick="toggleCat(this)">
+            <div class="cat-row-label">商机状态与业务字段规则</div>
+            <div class="cat-row-bar"><div class="cat-row-bar-fill" style="width:50%"><div class="high-part" style="width:50%"></div></div></div>
+            <div class="cat-row-count"><b class="num">4</b> 条 · <span class="num">2</span> 条高</div>
+            <span class="chevron">▾</span>
+          </div>
+          <div class="cat-body">
+            <div class="cat-body-inner">
+              <table class="deck-table mini">
+                <tbody>
+                  <tr><td class="strong">自建商机状态判定错误</td><td><span class="badge high">高</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                  <tr><td class="strong">用户意向需细化到品类</td><td><span class="badge high">高</span></td><td><span class="status-text planning">需求梳理中</span></td></tr>
+                  <tr><td class="strong">增加预计成交时间 / 带单人字段，删除低频的中期款字段</td><td><span class="badge mid">中</span></td><td><span class="status-text planning">未开始</span></td></tr>
+                  <tr><td class="strong">用户意向细化到具体商品型号</td><td><span class="badge low">低</span></td><td><span class="status-text planning">内部已评估，暂缓</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ 下半年规划 ============ -->
+
+  <section id="plan">
+
+    <div class="slide">
+      <div class="slide-title-row"><span class="slide-number num slide-number-tag">H2规划-1</span><span class="slide-title">门店工作台体验升级<span class="flagship-tag">原型已完成</span></span></div>
+      <div class="slide-divider"></div><div class="slide-divider-accent"></div>
+
+      <p class="prose">门店的诉求很直接：打开 CRM 第一眼想看到今天该做什么、想找的用户能不能立刻定位到，而不是对着一份纯列表自己翻；提醒规则也希望能按自己门店的节奏来设置，而不是被系统统一配置卡死。</p>
+      <p class="prose">我们做的是把用户列表页整体升级为工作台：打开先看到数据概况和待办提醒，用户搜索从翻页变成直接查找，提醒规则的设置权交还给门店自己。</p>
+
+      <div class="demo-frame-wrap">
+        <div class="demo-frame-bar">
+          <span>点击体验原型</span>
+          <a href="https://xingyaqin222-a11y.github.io/xingyaqin/crmdemo.html" target="_blank" rel="noopener">新标签页打开 ↗</a>
+        </div>
+        <iframe class="demo-frame" src="https://xingyaqin222-a11y.github.io/xingyaqin/crmdemo.html" title="CRM 工作台体验升级原型" loading="lazy"></iframe>
+      </div>
+
+      <div class="table-wrap">
+        <table class="deck-table">
+          <thead><tr><th>做了什么</th><th>解决门店的什么诉求</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">数据概览 + 提醒任务 + 快捷搜索的工作台首页</td><td>想一眼看到今天要做什么，立刻找到要跟进的用户</td></tr>
+            <tr><td class="strong">门店自定义提醒设置</td><td>提醒规则想按自己门店的经营节奏来，不想被系统统一配置</td></tr>
+            <tr><td class="strong">新增用户意向品类字段</td><td>意向信息要细化到品类，才能精准跟进和统计</td></tr>
+            <tr><td class="strong">用户详情页视觉简化</td><td>信息密度太高，录入和查看都觉得累</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="slide">
+      <div class="slide-title-row"><span class="slide-number num slide-number-tag">H2规划-2</span><span class="slide-title">手机号 / 临时用户机制<span class="flagship-tag warn">方案调整中</span></span></div>
+      <div class="slide-divider"></div><div class="slide-divider-accent"></div>
+
+      <p class="prose">门店反馈与现状排查双重验证了同一个问题：不少意向用户只愿意留微信，不愿意留手机号，而 CRM 目前手机号强制必填，导致这部分客资无法正常录入或跟进。</p>
+
+      <div class="evidence-box">
+        <b>门店真实案例：</b>日日顺北园红星美凯龙店，预约表 407 个用户中 286 人没有留电话；这部分用户推进到转设计阶段时，仅 14 人靠微信完成转化，占比 <b>9%</b>——客资没有真正流失，只是系统留不住。昆明海卡店老板也主动提出同样诉求，参考同类产品（橙子 CRM）也已支持微信号字段、手机号非必填。
+      </div>
+
+      <p class="prose">方案不是简单放开必填校验，而是分清手机号承担的职责（唯一性判定、外部系统匹配、报表口径），设计"正式用户 / 临时用户"两级机制：</p>
+
+      <div class="flow-row">
+        <span class="flow-pill">仅有微信号 → 临时用户</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-pill">可正常创建、跟进、走完整商机流程</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-pill">补录手机号 → 升级为正式用户</span>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<footer>CRM 系统 · 2026 H1 进展与 H2 方向同步 · 内部资料，请勿外传</footer>
+
+<script>
+  function toggleCat(row){
+    const block = row.closest('.cat-block');
+    const body = block.querySelector('.cat-body');
+    const isOpen = block.classList.contains('open');
+    document.querySelectorAll('.cat-block.open').forEach(b=>{
+      if(b!==block){ b.classList.remove('open'); b.querySelector('.cat-body').style.maxHeight=null; }
+    });
+    if(isOpen){
+      block.classList.remove('open');
+      body.style.maxHeight = null;
+    }else{
+      block.classList.add('open');
+      body.style.maxHeight = body.scrollHeight + 'px';
+    }
+  }
+
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        const id = entry.target.getAttribute('id');
+        navLinks.forEach(a=>{
+          a.classList.toggle('active', a.dataset.target === id);
+        });
+      }
+    });
+  }, {rootMargin:'-40% 0px -50% 0px', threshold:0});
+  sections.forEach(s=>{ if(s.id) obs.observe(s); });
+</script>
+
+</body>
+</html>
