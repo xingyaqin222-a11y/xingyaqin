@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM使用数据分析标准要求</title>
+<style>
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --accent2: #7c3aed;
+  --accent3: #059669;
+  --accent4: #d97706;
+  --danger: #dc2626;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 24px 16px 48px;
+}
+.container { max-width: 900px; margin: 0 auto; }
+
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--accent);
+}
+.header h1 { font-size: 26px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.header .subtitle { font-size: 13px; color: var(--text-muted); }
+
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin-bottom: 16px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.section-title { font-size: 17px; font-weight: 700; color: var(--text); }
+
+.content { font-size: 14px; color: var(--text); }
+.content p { margin-bottom: 8px; }
+.content ul { list-style: none; padding-left: 0; }
+.content li { padding: 5px 0 5px 18px; position: relative; }
+.content li::before { content: "•"; position: absolute; left: 4px; top: 5px; color: var(--accent); font-weight: 700; }
+.content strong { color: var(--accent); font-weight: 600; }
+.content .highlight {
+  background: rgba(37, 99, 235, 0.06);
+  border-left: 3px solid var(--accent);
+  padding: 8px 14px;
+  border-radius: 0 6px 6px 0;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+th { background: #f1f5f9; font-weight: 600; color: var(--text); font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+td { color: var(--text-muted); }
+td:first-child { color: var(--text); font-weight: 500; }
+tr:hover td { background: #f8fafc; }
+
+.tag { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; margin: 0 2px; }
+.tag-blue { background: rgba(37, 99, 235, 0.1); color: var(--accent); }
+.tag-green { background: rgba(5, 150, 105, 0.1); color: var(--accent3); }
+.tag-orange { background: rgba(217, 119, 6, 0.1); color: var(--accent4); }
+.tag-purple { background: rgba(124, 58, 237, 0.1); color: var(--accent2); }
+.tag-gray { background: rgba(100, 116, 139, 0.1); color: var(--text-muted); }
+
+.def-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+.def-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.def-card .def-label { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.def-card .def-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+.tier-bar { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+.tier-item { flex: 1; min-width: 130px; text-align: center; border-radius: 8px; padding: 12px 8px; border: 1px solid var(--border); }
+.tier-item .tier-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.tier-item .tier-criteria { font-size: 12px; color: var(--text-muted); }
+
+.footer { text-align: center; margin-top: 24px; font-size: 12px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>CRM使用数据分析标准要求</h1>
+    <div class="subtitle">巨商汇端 · 定制平台端 · 双端协同分析规范</div>
+  </div>
+
+  <!-- 一、数据清洗标准 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">1</span>
+      <span class="section-title">数据清洗标准</span>
+    </div>
+    <div class="content">
+      <ul>
+        <li><strong>剔除测试门店</strong>：数据分析前必须识别并剔除测试门店数据（如「青岛瑞邦家居集成有限公司」）</li>
+        <li><strong>剔除被动落地页</strong>：「我的用户」作为默认落地页，受 banner 等通知影响，被动点击不等于主动使用，使用分级计算时剔除</li>
+        <li><strong>对比展示</strong>：总量数据需同时展示剔除前和剔除后两个口径（如 3000 条 → 1571 条）</li>
+      </ul>
+      <div class="highlight">
+        <strong>备注</strong>：「我的用户」剔除仅用于使用分级计算，展示数据（总访问量、功能排名等）仍保留原始口径，并在表上方标注说明。
+      </div>
+    </div>
+  </div>
+
+  <!-- 二、使用分级标准 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">2</span>
+      <span class="section-title">使用分级标准</span>
+    </div>
+    <div class="content">
+      <div class="tier-bar">
+        <div class="tier-item" style="background:rgba(5,150,105,0.06);border-color:rgba(5,150,105,0.2)">
+          <div class="tier-name" style="color:var(--accent3)">深度使用</div>
+          <div class="tier-criteria">业务操作 ≥ 20次<br>且 功能 ≥ 3个</div>
+        </div>
+        <div class="tier-item" style="background:rgba(37,99,235,0.06);border-color:rgba(37,99,235,0.2)">
+          <div class="tier-name" style="color:var(--accent)">活跃使用</div>
+          <div class="tier-criteria">业务操作 ≥ 5次<br>且 功能 ≥ 2个</div>
+        </div>
+        <div class="tier-item" style="background:rgba(217,119,6,0.06);border-color:rgba(217,119,6,0.2)">
+          <div class="tier-name" style="color:var(--accent4)">轻度使用</div>
+          <div class="tier-criteria">业务操作 ≥ 2次</div>
+        </div>
+        <div class="tier-item" style="background:rgba(100,116,139,0.06);border-color:rgba(100,116,139,0.2)">
+          <div class="tier-name" style="color:var(--text-muted)">仅浏览</div>
+          <div class="tier-criteria">业务操作 ≤ 1次</div>
+        </div>
+      </div>
+      <div class="highlight">
+        <strong>分级口径</strong>：业务操作次数 = 剔除「我的用户」后的有效访问次数；功能数 = 该门店使用过的不同功能节点数量。
+      </div>
+    </div>
+  </div>
+
+  <!-- 三、端口定义标准 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">3</span>
+      <span class="section-title">端口定义标准</span>
+    </div>
+    <div class="content">
+      <div class="def-grid">
+        <div class="def-card">
+          <div class="def-label" style="color:var(--accent)">巨商汇端</div>
+          <div class="def-desc">巨商汇 APP + 巨商汇 PC端</div>
+        </div>
+        <div class="def-card">
+          <div class="def-label" style="color:var(--accent2)">定制平台端</div>
+          <div class="def-desc">三翼鸟工作台 APP + 定制平台2.0 PC端</div>
+        </div>
+        <div class="def-card">
+          <div class="def-label" style="color:var(--accent3)">双端使用</div>
+          <div class="def-desc">门店同时使用了以上两个大端口即可（不限 APP 还是 PC，如 A 门店用了巨商汇 APP + 定制平台2.0 PC端即算双端）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 四、迁移分析标准 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">4</span>
+      <span class="section-title">迁移分析标准</span>
+    </div>
+    <div class="content">
+      <table>
+        <thead>
+          <tr><th style="width:120px">分类</th><th>定义</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="tag tag-blue">新增门店</span></td><td>历史期不存在，巨商汇上线后才开始使用</td></tr>
+          <tr><td><span class="tag tag-green">完全迁移</span></td><td>历史期有定制平台使用，4.28 后只用巨商汇，完全不再使用定制平台</td></tr>
+          <tr><td><span class="tag tag-purple">双端并存</span></td><td>历史期有定制平台使用，4.28 后巨商汇与定制平台两端都在使用</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight">
+        <strong>迁移判定关键</strong>：以门店编码为唯一标识，跨数据集匹配。历史期指巨商汇上线前（3.27-4.28），仅定制平台可用。
+      </div>
+    </div>
+  </div>
+
+  <!-- 五、分析维度标准 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">5</span>
+      <span class="section-title">分析维度标准（看板板块结构）</span>
+    </div>
+    <div class="content">
+      <table>
+        <thead>
+          <tr><th style="width:50px">序号</th><th>板块名称</th><th style="width:200px">适用条件</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>分端来源总览</td><td>必选</td></tr>
+          <tr><td>2</td><td>功能节点分析</td><td>必选</td></tr>
+          <tr><td>3</td><td>分端×功能节点交叉分析</td><td>必选</td></tr>
+          <tr><td>4</td><td>门店类型分析</td><td>必选</td></tr>
+          <tr><td>5</td><td>门店使用排名</td><td>必选</td></tr>
+          <tr><td>6</td><td>双端使用分析</td><td>有多端数据时</td></tr>
+          <tr><td>7</td><td>门店迁移分析</td><td>有历史对比数据时</td></tr>
+          <tr><td>8</td><td>小微区域分布</td><td>必选</td></tr>
+          <tr><td>9</td><td>PC端使用深度分析</td><td>必选</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 六、看板呈现标准 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">6</span>
+      <span class="section-title">看板呈现标准</span>
+    </div>
+    <div class="content">
+      <ul>
+        <li><strong>主题</strong>：浅色系</li>
+        <li><strong>布局</strong>：紧凑，去除多余留白</li>
+        <li><strong>图表排序</strong>：按数值从大到小排列</li>
+        <li><strong>明细表交互</strong>：数据量大的表格采用筛选 + 搜索 + 分页（每页 20 条）交互式展示</li>
+        <li><strong>明细表折叠</strong>：固定展示前 N 条（如前 8 家），剩余折叠，点击按钮展开/收起</li>
+        <li><strong>标题准确性</strong>：看板标题准确反映分析内容和时间范围（如「巨商汇端 CRM使用数据分析（6月）」）</li>
+        <li><strong>关键发现保留</strong>：删除冗余明细表后，必须保留关键发现结论</li>
+        <li><strong>备注说明</strong>：涉及口径调整的表，需在表上方标注说明（如剔除「我的用户」的备注）</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 七、输出与发布标准 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">7</span>
+      <span class="section-title">输出与发布标准</span>
+    </div>
+    <div class="content">
+      <ul>
+        <li><strong>文件格式</strong>：HTML 本地文件，自包含（数据全部内联，仅 Chart.js 从 CDN 加载）</li>
+        <li><strong>文件输出路径</strong>：桌面「work buddy」文件夹</li>
+        <li><strong>周报格式</strong>：段落式（非表格），关键项加粗并附带详情</li>
+        <li><strong>数据结论</strong>：需提供整体数据结论摘要，包含核心发现和一句话总结</li>
+      </ul>
+      <div class="highlight">
+        <strong>发布说明</strong>：输出本地 HTML 文件即可，不需要在线链接。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    CRM使用数据分析标准要求 · 基于历次分析实践提炼 · 供后续复用
+  </div>
+
+</div>
+</body>
+</html>
