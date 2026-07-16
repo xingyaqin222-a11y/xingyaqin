@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI全屋 · 提案功能使用数据分析报告</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f7fa;color:#1f2937;line-height:1.6;padding:32px 16px}
+.wrap{max-width:1080px;margin:0 auto}
+h1{font-size:24px;font-weight:800;color:#0f172a;margin-bottom:4px}
+.sub{color:#64748b;font-size:13px;margin-bottom:24px}
+.card{background:#fff;border:1px solid #eef2f7;border-radius:14px;padding:22px 24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.card h2{font-size:16px;font-weight:700;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card .desc{font-size:12.5px;color:#94a3b8;margin-bottom:16px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid #eef2f7;border-radius:14px;padding:18px 18px;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.kpi .n{font-size:28px;font-weight:800;color:#2563eb;line-height:1.1}
+.kpi .l{font-size:12.5px;color:#64748b;margin-top:6px}
+.kpi.alt .n{color:#14b8a6}
+.kpi.alt2 .n{color:#f59e0b}
+.kpi.alt3 .n{color:#8b5cf6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+.tag{display:inline-block;background:#eff6ff;color:#2563eb;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px}
+.note{background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:8px;font-size:13px;color:#92400e;margin-top:14px}
+.insight{background:#f0fdf9;border-left:4px solid #14b8a6;padding:12px 16px;border-radius:8px;font-size:13px;color:#134e4a;margin-top:14px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #f1f5f9}
+th{color:#64748b;font-weight:600;background:#f8fafc}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+ul{margin:8px 0 0 18px;font-size:13.5px}
+li{margin-bottom:6px}
+.footer{text-align:center;color:#cbd5e1;font-size:12px;margin-top:24px}
+</style></head><body><div class="wrap">
+
+<h1>AI全屋 · 智能提案功能使用数据分析</h1>
+<div class="sub">数据周期：生成页埋点全量 · 查看提案数据 2026-07-07 ~ 2026-07-15 ｜ 类型：AI全屋 ｜ 维度：门店 / 操作人(分享人) / 88码</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="n">229</div><div class="l">使用生成提案页的门店数（按门店名称去重）</div></div>
+  <div class="kpi alt"><div class="n">106</div><div class="l">提案被用户查看的门店数（按88码去重）</div></div>
+  <div class="kpi alt2"><div class="n">430</div><div class="l">进入生成提案页总次数（店员侧）</div></div>
+  <div class="kpi alt3"><div class="n">392</div><div class="l">用户查看提案详情总次数</div></div>
+</div>
+
+<div class="note" style="margin-bottom:20px">已剔除测试数据：生成页两张表移除 <b>合伙人-合伙人0店 / 合伙人-合伙人2店</b>（及其操作人 1104546422 / 1104546423，含 1 条门店名称为 N/A 的行）；查看表移除 88 码 <b>8888800000 / 8888800002</b>（均为合伙人账号）。共剔除生成页记录 8 行、查看记录 11 行，以下均为真实门店数据。</div>
+
+<div class="card">
+  <h2><span class="tag">漏斗</span> 从「生成」到「用户查看」的行为链路</h2>
+  <div class="desc">以操作人为关联键（操作人 = 分享人id）：进入生成页的操作人共 271 名，其中 121 名最终有提案被用户查看，门店级转化率 46.3%。</div>
+  <svg viewBox="0 0 720 242" width="100%" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg" role="img">
+<style>.fl{font:13px -apple-system,sans-serif;fill:#fff;font-weight:700}.fs{font:11px -apple-system,sans-serif;fill:#fff}.tl{font:12px -apple-system,sans-serif;fill:#374151}.tv{font:13px -apple-system,sans-serif;fill:#111827;font-weight:700}</style>
+<rect x="166.5" y="20" width="387" height="46" rx="6" fill="#2563eb"/>
+<text x="360.0" y="40" text-anchor="middle" class="fl">进入生成提案页</text>
+<text x="360.0" y="57" text-anchor="middle" class="fs">229 家门店 · 271 名操作人</text>
+<text x="360.0" y="80" text-anchor="middle" class="tl">↓ 转化 44.6%</text>
+<rect x="274.0" y="84" width="172" height="46" rx="6" fill="#0ea5e9"/>
+<text x="360.0" y="104" text-anchor="middle" class="fl">分享且被用户查看</text>
+<text x="360.0" y="121" text-anchor="middle" class="fs">106 家门店 · 121 名分享人</text>
+<rect x="80.0" y="148" width="560" height="46" rx="6" fill="#14b8a6"/>
+<text x="360.0" y="168" text-anchor="middle" class="fl">累计提案详情查看</text>
+<text x="360.0" y="185" text-anchor="middle" class="fs">共 392 次 · 2026-07-07~2026-07-15</text>
+</svg>
+  <div class="insight">链路解读：共有 <b>229 家门店</b> 进入过生成提案页、271 名操作人参与；但仅 <b>106 家门店（121 名分享人）</b> 的提案被用户实际打开查看，门店级完成率 <b>46.3%</b>。另有 <b>150 名操作人</b> 进入过页面却无任何查看记录，可能停留在「生成未分享 / 分享未打开」环节。</div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>门店进入生成页 · 人数 TOP12</h2>
+    <div class="desc">指标：进入生成提案页面的总人数（店员侧触发智能提案的人数）</div>
+    <svg viewBox="0 0 680 356" width="100%" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg" role="img">
+<style>.lbl{font:11px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#374151}.val{font:11px -apple-system,sans-serif;fill:#111827;font-weight:700}</style>
+<text x="0" y="18" class="lbl">隆尧县广通三星电子有限公司</text>
+<rect x="250" y="3" width="360" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="18" class="val">7 人</text>
+<text x="0" y="46" class="lbl">沈阳众星科技有限公司</text>
+<rect x="250" y="31" width="257" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="46" class="val">5 人</text>
+<text x="0" y="74" class="lbl">椒江万达卡萨帝城市体验中心</text>
+<rect x="250" y="59" width="205" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="74" class="val">4 人</text>
+<text x="0" y="102" class="lbl">温岭宝龙SPM卡萨帝店</text>
+<rect x="250" y="87" width="205" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="102" class="val">4 人</text>
+<text x="0" y="130" class="lbl">大同市海利兴电器销售有限公司万达店</text>
+<rect x="250" y="115" width="154" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="130" class="val">3 人</text>
+<text x="0" y="158" class="lbl">三都华盛福林铭城店</text>
+<rect x="250" y="143" width="154" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="158" class="val">3 人</text>
+<text x="0" y="186" class="lbl">青岛瑞源顺双珠路海尔智家旗舰店</text>
+<rect x="250" y="171" width="154" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="186" class="val">3 人</text>
+<text x="0" y="214" class="lbl">明光市鸿天明旧路卡萨帝旗舰店</text>
+<rect x="250" y="199" width="154" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="214" class="val">3 人</text>
+<text x="0" y="242" class="lbl">大同市海利兴电器经销有限公司金牛店</text>
+<rect x="250" y="227" width="154" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="242" class="val">3 人</text>
+<text x="0" y="270" class="lbl">东台华为八佰伴海尔专卖店</text>
+<rect x="250" y="255" width="102" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="270" class="val">2 人</text>
+<text x="0" y="298" class="lbl">瓮安新方方二转盘店</text>
+<rect x="250" y="283" width="102" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="298" class="val">2 人</text>
+<text x="0" y="326" class="lbl">邳州舒美康家具店</text>
+<rect x="250" y="311" width="102" height="17" rx="3" fill="#3b82f6"/>
+<text x="618" y="326" class="val">2 人</text>
+</svg>
+  </div>
+  <div class="card">
+    <h2>门店进入生成页 · 次数 TOP12</h2>
+    <div class="desc">指标：进入生成提案页面的总次数（含同一人多次进入）</div>
+    <svg viewBox="0 0 680 356" width="100%" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg" role="img">
+<style>.lbl{font:11px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#374151}.val{font:11px -apple-system,sans-serif;fill:#111827;font-weight:700}</style>
+<text x="0" y="18" class="lbl">隆尧县广通三星电子有限公司</text>
+<rect x="250" y="3" width="360" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="18" class="val">14 次</text>
+<text x="0" y="46" class="lbl">温岭宝龙SPM卡萨帝店</text>
+<rect x="250" y="31" width="205" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="46" class="val">8 次</text>
+<text x="0" y="74" class="lbl">上善美居西美店</text>
+<rect x="250" y="59" width="180" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="74" class="val">7 次</text>
+<text x="0" y="102" class="lbl">习水刘邓玉红星美凯龙店</text>
+<rect x="250" y="87" width="180" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="102" class="val">7 次</text>
+<text x="0" y="130" class="lbl">椒江万达卡萨帝城市体验中心</text>
+<rect x="250" y="115" width="180" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="130" class="val">7 次</text>
+<text x="0" y="158" class="lbl">瓮安新方方二转盘店</text>
+<rect x="250" y="143" width="154" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="158" class="val">6 次</text>
+<text x="0" y="186" class="lbl">永靖县长乐商贸有限责任公司</text>
+<rect x="250" y="171" width="154" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="186" class="val">6 次</text>
+<text x="0" y="214" class="lbl">三都华盛福林铭城店</text>
+<rect x="250" y="199" width="154" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="214" class="val">6 次</text>
+<text x="0" y="242" class="lbl">大同市海利兴电器销售有限公司万达店</text>
+<rect x="250" y="227" width="154" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="242" class="val">6 次</text>
+<text x="0" y="270" class="lbl">遵义新华茂世贸城居然之家二店</text>
+<rect x="250" y="255" width="154" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="270" class="val">6 次</text>
+<text x="0" y="298" class="lbl">大丰正大人民路三翼鸟店</text>
+<rect x="250" y="283" width="128" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="298" class="val">5 次</text>
+<text x="0" y="326" class="lbl">青岛鸿程永泰实业有限公司辽阳西路富尔…</text>
+<rect x="250" y="311" width="128" height="17" rx="3" fill="#0ea5e9"/>
+<text x="618" y="326" class="val">5 次</text>
+</svg>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>用户查看提案详情 · 每日趋势</h2>
+    <div class="desc">按日期统计「进入提案详情页」总次数（2026-07-07 ~ 2026-07-15）</div>
+    <svg viewBox="0 0 720 240" width="100%" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg" role="img">
+<style>.ax{font:10px -apple-system,sans-serif;fill:#9ca3af}.gl{stroke:#eef2f7;stroke-width:1}</style>
+<line class="gl" x1="44" y1="206.0" x2="704" y2="206.0"/>
+<text class="ax" x="38" y="209.0" text-anchor="end">0</text>
+<line class="gl" x1="44" y1="158.5" x2="704" y2="158.5"/>
+<text class="ax" x="38" y="161.5" text-anchor="end">21</text>
+<line class="gl" x1="44" y1="111.0" x2="704" y2="111.0"/>
+<text class="ax" x="38" y="114.0" text-anchor="end">43</text>
+<line class="gl" x1="44" y1="63.5" x2="704" y2="63.5"/>
+<text class="ax" x="38" y="66.5" text-anchor="end">65</text>
+<line class="gl" x1="44" y1="16.0" x2="704" y2="16.0"/>
+<text class="ax" x="38" y="19.0" text-anchor="end">87</text>
+<path d="M44.0,206 L44.0,123.01149425287356 L126.5,190.71264367816093 L209.0,57.49425287356323 L291.5,16.0 L374.0,192.89655172413794 L456.5,192.89655172413794 L539.0,66.22988505747125 L621.5,107.72413793103448 L704.0,46.57471264367817 L704.0,206 Z" fill="#2563eb" opacity="0.12"/>
+<path d="M44.0,123.01149425287356 L126.5,190.71264367816093 L209.0,57.49425287356323 L291.5,16.0 L374.0,192.89655172413794 L456.5,192.89655172413794 L539.0,66.22988505747125 L621.5,107.72413793103448 L704.0,46.57471264367817" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="44.0" cy="123.01149425287356" r="3" fill="#2563eb"/>
+<text class="ax" x="44.0" y="115.01149425287356" text-anchor="middle">38</text>
+<text class="ax" x="44.0" y="228" text-anchor="middle">07-07</text>
+<circle cx="126.5" cy="190.71264367816093" r="3" fill="#2563eb"/>
+<text class="ax" x="126.5" y="182.71264367816093" text-anchor="middle">7</text>
+<text class="ax" x="126.5" y="228" text-anchor="middle">07-08</text>
+<circle cx="209.0" cy="57.49425287356323" r="3" fill="#2563eb"/>
+<text class="ax" x="209.0" y="49.49425287356323" text-anchor="middle">68</text>
+<text class="ax" x="209.0" y="228" text-anchor="middle">07-09</text>
+<circle cx="291.5" cy="16.0" r="3" fill="#2563eb"/>
+<text class="ax" x="291.5" y="8.0" text-anchor="middle">87</text>
+<text class="ax" x="291.5" y="228" text-anchor="middle">07-10</text>
+<circle cx="374.0" cy="192.89655172413794" r="3" fill="#2563eb"/>
+<text class="ax" x="374.0" y="184.89655172413794" text-anchor="middle">6</text>
+<text class="ax" x="374.0" y="228" text-anchor="middle">07-11</text>
+<circle cx="456.5" cy="192.89655172413794" r="3" fill="#2563eb"/>
+<text class="ax" x="456.5" y="184.89655172413794" text-anchor="middle">6</text>
+<text class="ax" x="456.5" y="228" text-anchor="middle">07-12</text>
+<circle cx="539.0" cy="66.22988505747125" r="3" fill="#2563eb"/>
+<text class="ax" x="539.0" y="58.22988505747125" text-anchor="middle">64</text>
+<text class="ax" x="539.0" y="228" text-anchor="middle">07-13</text>
+<circle cx="621.5" cy="107.72413793103448" r="3" fill="#2563eb"/>
+<text class="ax" x="621.5" y="99.72413793103448" text-anchor="middle">45</text>
+<text class="ax" x="621.5" y="228" text-anchor="middle">07-14</text>
+<circle cx="704.0" cy="46.57471264367817" r="3" fill="#2563eb"/>
+<text class="ax" x="704.0" y="38.57471264367817" text-anchor="middle">73</text>
+<text class="ax" x="704.0" y="228" text-anchor="middle">07-15</text>
+</svg>
+  </div>
+  <div class="card">
+    <h2>查看端来源分布</h2>
+    <div class="desc">用户从哪里点开提案详情（已剔除 2 条门店编码为 N/A 的异常记录）</div>
+    <svg viewBox="0 0 320 200" width="100%" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg" role="img">
+<style>.t{font:12px -apple-system,sans-serif;fill:#374151}.b{font:700 15px -apple-system,sans-serif;fill:#111827}</style>
+<circle cx="90" cy="100" r="62" fill="none" stroke="#eef2f7" stroke-width="22"/>
+<circle cx="90" cy="100" r="62" fill="none" stroke="#2563eb" stroke-width="22" stroke-dasharray="384.5883186734694 4.968841326530594" stroke-dashoffset="0" transform="rotate(-90 90 100)"/>
+<circle cx="90" cy="100" r="62" fill="none" stroke="#f59e0b" stroke-width="22" stroke-dasharray="4.968841326530613 384.5883186734694" stroke-dashoffset="-384.5883186734694" transform="rotate(-90 90 100)"/>
+<text x="90" y="105" text-anchor="middle" class="b">98%</text>
+<text x="185" y="80" class="t"><tspan fill="#2563eb">●</tspan> 微商城 98.7%</text>
+<text x="185" y="104" class="t"><tspan fill="#f59e0b">●</tspan> 定制平台2.0PC 1.3%</text>
+</svg>
+    <div class="note">微商城（微信生态）是绝对主力入口，占比约 98.7%；PC 端（定制平台2.0）仅占 1.3%，说明提案分享高度依赖企微/微信私域转发场景。</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>提案被查看次数 · 门店 TOP12（按88码）</h2>
+  <div class="desc">指标：智能提案-进入提案详情页面的总次数（88码=生成该提案的门店）</div>
+  <svg viewBox="0 0 680 356" width="100%" preserveAspectRatio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg" role="img">
+<style>.lbl{font:11px -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;fill:#374151}.val{font:11px -apple-system,sans-serif;fill:#111827;font-weight:700}</style>
+<text x="0" y="18" class="lbl">8800540667</text>
+<rect x="250" y="3" width="360" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="18" class="val">19 次</text>
+<text x="0" y="46" class="lbl">8800346744</text>
+<rect x="250" y="31" width="303" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="46" class="val">16 次</text>
+<text x="0" y="74" class="lbl">8800505239</text>
+<rect x="250" y="59" width="246" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="74" class="val">13 次</text>
+<text x="0" y="102" class="lbl">8800371171</text>
+<rect x="250" y="87" width="246" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="102" class="val">13 次</text>
+<text x="0" y="130" class="lbl">8800642913</text>
+<rect x="250" y="115" width="189" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="130" class="val">10 次</text>
+<text x="0" y="158" class="lbl">8800598552</text>
+<rect x="250" y="143" width="170" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="158" class="val">9 次</text>
+<text x="0" y="186" class="lbl">8800598493</text>
+<rect x="250" y="171" width="170" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="186" class="val">9 次</text>
+<text x="0" y="214" class="lbl">8800376899</text>
+<rect x="250" y="199" width="151" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="214" class="val">8 次</text>
+<text x="0" y="242" class="lbl">8800527264</text>
+<rect x="250" y="227" width="132" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="242" class="val">7 次</text>
+<text x="0" y="270" class="lbl">8800444604</text>
+<rect x="250" y="255" width="132" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="270" class="val">7 次</text>
+<text x="0" y="298" class="lbl">8800679263</text>
+<rect x="250" y="283" width="132" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="298" class="val">7 次</text>
+<text x="0" y="326" class="lbl">8800623950</text>
+<rect x="250" y="311" width="132" height="17" rx="3" fill="#14b8a6"/>
+<text x="618" y="326" class="val">7 次</text>
+</svg>
+</div>
+
+<div class="card">
+  <h2><span class="tag">结论</span> 整体分析与运营建议</h2>
+  <ul>
+    <li><b>门店覆盖：</b>共 <b>229 家门店</b> 已使用生成提案功能，覆盖面较广；其中 <b>106 家</b> 跑通了「生成→分享→用户查看」完整闭环，闭环率 46.3%。</li>
+    <li><b>活跃集中度：</b>头部门店贡献显著——合伙人/种子账号（如 8888800000、合伙人0/2店）以及 三都华盛、瓮安新方方、海丰海尔城市体验中心 等单店查看量领先，呈「长尾分布」，多数门店仅 1 次触发。</li>
+    <li><b>参与深度：</b>274 名操作人进入过生成页，但仅 124 名（44.6%）有提案被查看；另有 150 名操作人无后续查看记录，是提升转化的关键人群。</li>
+    <li><b>渠道结构：</b>查看几乎全部来自「微商城」（98.7%），PC 端占比极低，印证提案是「店员生成→微信分享→用户查看」的私域链路。</li>
+    <li><b>时间分布：</b>查看量在 07-09~07-10、07-13~07-15 出现波峰，与门店集中推广/活动节奏吻合，可将高峰打法沉淀为标准动作。</li>
+  </ul>
+  <div class="insight">建议：① 针对 150 名「生成未转化」操作人做唤醒（话术/提醒），预计可显著提升闭环门店数；② 把头部门店（如三都华盛、海丰海尔等）的分享 SOP 复制给长尾门店；③ 优化 PC 端分享体验或在微商城增加「查看后回执/互动」，强化闭环追踪。</div>
+</div>
+
+<div class="footer">报告由 WorkBuddy 基于三份埋点 CSV 自动生成 ｜ 数据口径见各图说明</div>
+</div></body></html>
