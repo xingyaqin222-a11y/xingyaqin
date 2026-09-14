@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8月提案数据看板 · CRM前置</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --color-primary: #005AA0;
+    --color-primary-light: #2E7CB8;
+    --color-primary-bg: #E8F1F8;
+    --color-accent: #E60012;
+    --color-success: #16A34A;
+    --color-warning: #F59E0B;
+    --color-text: #1F2937;
+    --color-text-sub: #6B7280;
+    --color-border: #E5E7EB;
+    --color-bg: #F8FAFC;
+    --color-card: #FFFFFF;
+    --color-track: #F3F4F6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+    padding: 24px;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  /* 头部 */
+  .header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: #fff;
+    padding: 28px 32px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0,90,160,0.15);
+  }
+  .header h1 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+  .header p { font-size: 14px; opacity: 0.92; }
+  .header .tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 8px;
+    margin-top: 6px;
+  }
+
+  /* 章节 */
+  .section {
+    background: var(--color-card);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--color-border);
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: var(--color-primary);
+    border-radius: 2px;
+  }
+  .section-sub {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    margin-bottom: 20px;
+  }
+
+  /* KPI卡片 */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .kpi-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--color-primary);
+  }
+  .kpi-card.accent::before { background: var(--color-accent); }
+  .kpi-card.success::before { background: var(--color-success); }
+  .kpi-card.warning::before { background: var(--color-warning); }
+  .kpi-label {
+    font-size: 13px;
+    color: var(--color-text-sub);
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.1;
+  }
+  .kpi-unit {
+    font-size: 14px;
+    color: var(--color-text-sub);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+  .kpi-desc {
+    font-size: 12px;
+    color: var(--color-text-sub);
+    margin-top: 6px;
+  }
+  .kpi-trend {
+    font-size: 12px;
+    color: var(--color-success);
+    margin-top: 4px;
+  }
+
+  /* 表格 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead {
+    background: var(--color-primary-bg);
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 600;
+    color: var(--color-primary);
+    border-bottom: 2px solid var(--color-primary);
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  tbody tr:hover { background: #F9FAFB; }
+  .rank-badge {
+    display: inline-block;
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 600;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 26px;
+    font-size: 12px;
+  }
+  .rank-badge.gold { background: linear-gradient(135deg, #F59E0B, #D97706); }
+  .rank-badge.silver { background: linear-gradient(135deg, #9CA3AF, #6B7280); }
+  .rank-badge.bronze { background: linear-gradient(135deg, #B45309, #92400E); }
+  .type-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .type-tag.AI全屋 { background: #DBEAFE; color: #1E40AF; }
+  .type-tag.全屋空气 { background: #D1FAE5; color: #065F46; }
+  .type-tag.智控设计 { background: #FEF3C7; color: #92400E; }
+
+  .code {
+    font-family: "SF Mono", Monaco, Menlo, monospace;
+    font-size: 12px;
+    color: var(--color-text);
+    background: #F3F4F6;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  /* 网格 */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  .chart-box {
+    background: var(--color-bg);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+  }
+  .chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 12px;
+  }
+  .chart-container {
+    position: relative;
+    height: 320px;
+  }
+  .chart-tall { height: 460px; }
+
+  /* 类型卡片 */
+  .type-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .type-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .type-card-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  .type-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+  .metric-label {
+    font-size: 13px;
+    color: var(--color-text-sub);
+  }
+  .metric-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* 提示 */
+  .note {
+    background: #FEF3C7;
+    border-left: 3px solid var(--color-warning);
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #92400E;
+    margin-top: 14px;
+  }
+  .success-bar {
+    background: linear-gradient(to right, var(--color-success), var(--color-primary));
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 6px;
+  }
+  .bar-track {
+    background: var(--color-track);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--color-primary);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 头部 -->
+  <div class="header">
+    <h1>📊 8月提案数据看板</h1>
+    <p>基于"生成提案页"与"查看提案页"埋点数据，分析8月门店提案生成与分享查看情况</p>
+    <div style="margin-top: 10px;">
+      <span class="tag">📅 数据周期：2026年8月</span>
+      <span class="tag">📁 数据源：定制平台/智能提案埋点</span>
+      <span class="tag">🔗 关联键：提案编码（唯一）</span>
+    </div>
+  </div>
+
+  <!-- 总览 KPI -->
+  <div class="section">
+    <div class="section-title">核心指标</div>
+    <div class="section-sub">8月提案生成与被查看的整体概览</div>
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-label">8月生成提案数</div>
+        <div class="kpi-value">3,480</div>
+        <div class="kpi-desc">按提案编码去重（去除 N/A）</div>
+      </div>
+      <div class="kpi-card success">
+        <div class="kpi-label">被查看的提案数</div>
+        <div class="kpi-value">1,114</div>
+        <div class="kpi-desc">8月生成且被查看过的提案</div>
+      </div>
+      <div class="kpi-card accent">
+        <div class="kpi-label">查看率</div>
+        <div class="kpi-value">32.01<span class="kpi-unit">%</span></div>
+        <div class="kpi-desc">生成提案中被查看的比例</div>
+        <div class="bar-track"><div class="bar-fill" style="width: 32.01%; background: var(--color-accent);"></div></div>
+      </div>
+      <div class="kpi-card warning">
+        <div class="kpi-label">累计查看次数</div>
+        <div class="kpi-value">3,679</div>
+        <div class="kpi-desc">所有提案被查看的总次数</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 任务1：总览 + TOP10 -->
+  <div class="section">
+    <div class="section-title">任务1 · 总览与被打开最多的提案 TOP10</div>
+    <div class="section-sub">统计8月生成提案总数、查看率，并按"被查看次数"对所有提案进行排名，展示前10名及其类型归属</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 60px;">排名</th>
+          <th>提案编码</th>
+          <th>类型</th>
+          <th>门店（编码 + 名称）</th>
+          <th style="text-align: right;">被查看次数</th>
+        </tr>
+      </thead>
+      <tbody id="top10-table"></tbody>
+    </table>
+    <div class="note">
+      💡 观察：TOP10 热门提案中 <strong>AI 全屋占 7 席</strong>，<strong>全屋空气占 3 席</strong>。<strong>行唐县鸣阳物流有限公司</strong>表现尤为突出——旗下两个门店编码（8800277521、8800334552）合计生成 48 个提案，其中 8800277521 有 3 个提案进入 TOP10。
+    </div>
+  </div>
+
+  <!-- 任务2：类型分布 + 门店分析 -->
+  <div class="section">
+    <div class="section-title">任务2 · 类型分布与门店排名</div>
+    <div class="section-sub">分析8月生成的提案类型占比、生成最多的门店 TOP20，以及这些门店的提案构成与被查看情况</div>
+
+    <div class="grid-2">
+      <div class="chart-box">
+        <div class="chart-title">🎯 提案类型占比（按生成数量）</div>
+        <div class="chart-container">
+          <canvas id="typePieChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">🏪 生成提案最多的门店 TOP10</div>
+        <div class="chart-container">
+          <canvas id="storeBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size: 15px; margin: 20px 0 10px; color: var(--color-text);">📋 生成提案 TOP20 门店详细情况（含类型构成与查看次数）</h3>
+    <div style="font-size: 12px; color: var(--color-text-sub); margin-bottom: 8px;">
+      ⚠️ 排序含 <code>N/A</code>、<code>99999999</code>、<code>8888800000</code> 等异常门店编码（可能为系统标记或测试门店）；数据已按生成数排名展示。
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 60px;">排名</th>
+          <th>门店（编码 + 名称）</th>
+          <th>生成数</th>
+          <th>类型构成（AI全屋 / 全屋空气 / 智控设计）</th>
+          <th style="text-align: right;">查看次数</th>
+          <th style="text-align: right;">人均查看</th>
+        </tr>
+      </thead>
+      <tbody id="top20-table"></tbody>
+    </table>
+
+    <h3 style="font-size: 15px; margin: 24px 0 10px; color: var(--color-text);">🔥 查看次数最多的门店 TOP10（按总查看次数，含异常门店）</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 60px;">排名</th>
+          <th>门店（编码 + 名称）</th>
+          <th>查看次数</th>
+          <th style="text-align: right;">生成数</th>
+          <th style="text-align: right;">人均查看</th>
+        </tr>
+      </thead>
+      <tbody id="top10-view-table"></tbody>
+    </table>
+  </div>
+
+  <!-- 任务3：分类型分析 -->
+  <div class="section">
+    <div class="section-title">任务3 · 分类型数据汇总</div>
+    <div class="section-sub">按提案类型分别汇总：生成数、查看次数、被查看提案数、查看率、查看 UV（独立用户数）。不进行类型间对比。</div>
+
+    <div id="type-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;"></div>
+
+    <div class="note">
+      💡 说明：<strong>"智控设计"</strong>类型查看率超过 100% 是因为查看数据中包含部分 8 月之前生成但 8 月内被查看的提案（按提案编码去重时被记入查看侧）。
+    </div>
+  </div>
+
+  <!-- 脚注 -->
+  <div style="text-align: center; color: var(--color-text-sub); font-size: 12px; padding: 20px;">
+    数据来源：8月进入生成提案页面次数.csv、8月进入查看提案页面次数.csv · 关联键：提案编码
+  </div>
+
+</div>
+
+<script>
+  // 全局数据
+  const data = {
+    overview: {
+      total_gen: 3480,
+      total_viewed: 1114,
+      view_rate: 32.01,
+      total_view_count: 3679
+    },
+    top10: [
+      { pid: 'TA3202608110034', cnt: 43, type: 'AI全屋', store: '8800277521' },
+      { pid: 'TA3202608110061', cnt: 28, type: 'AI全屋', store: '8800277521' },
+      { pid: 'TA2202608190074', cnt: 26, type: '全屋空气', store: 'N/A' },
+      { pid: 'TA2202608200142', cnt: 24, type: '全屋空气', store: '8800661564' },
+      { pid: 'TA2202608120218', cnt: 24, type: '全屋空气', store: '8800657978' },
+      { pid: 'TA3202608100049', cnt: 23, type: 'AI全屋', store: '8800267934' },
+      { pid: 'TA3202608110064', cnt: 23, type: 'AI全屋', store: '8800277521' },
+      { pid: 'TA3202608190050', cnt: 22, type: 'AI全屋', store: '8888800000' },
+      { pid: 'TA3202608180185', cnt: 21, type: 'AI全屋', store: '8800599804' },
+      { pid: 'TA3202608120036', cnt: 19, type: 'AI全屋', store: '8800537937' }
+    ],
+    type_dist: { 'AI全屋': 2554, '全屋空气': 915, '智控设计': 11 },
+    top20: [
+      { store: 'N/A', gen: 230, types: { 'AI全屋': 0, '全屋空气': 227, '智控设计': 3 }, views: 192 },
+      { store: '99999999', gen: 187, types: { 'AI全屋': 0, '全屋空气': 187, '智控设计': 0 }, views: 88 },
+      { store: '8800334552', gen: 41, types: { 'AI全屋': 41, '全屋空气': 0, '智控设计': 0 }, views: 17 },
+      { store: '8800365364', gen: 36, types: { 'AI全屋': 0, '全屋空气': 36, '智控设计': 0 }, views: 6 },
+      { store: '8800241923', gen: 30, types: { 'AI全屋': 14, '全屋空气': 16, '智控设计': 0 }, views: 4 },
+      { store: '8888800000', gen: 27, types: { 'AI全屋': 23, '全屋空气': 4, '智控设计': 0 }, views: 47 },
+      { store: '8800620741', gen: 27, types: { 'AI全屋': 25, '全屋空气': 2, '智控设计': 0 }, views: 26 },
+      { store: '8800486813', gen: 20, types: { 'AI全屋': 8, '全屋空气': 12, '智控设计': 0 }, views: 13 },
+      { store: '8800495243', gen: 20, types: { 'AI全屋': 0, '全屋空气': 20, '智控设计': 0 }, views: 35 },
+      { store: '8800614055', gen: 15, types: { 'AI全屋': 15, '全屋空气': 0, '智控设计': 0 }, views: 25 },
+      { store: '8800224910', gen: 14, types: { 'AI全屋': 14, '全屋空气': 0, '智控设计': 0 }, views: 3 },
+      { store: '8800616160', gen: 14, types: { 'AI全屋': 14, '全屋空气': 0, '智控设计': 0 }, views: 6 },
+      { store: '8800429049', gen: 14, types: { 'AI全屋': 12, '全屋空气': 2, '智控设计': 0 }, views: 7 },
+      { store: '8800633829', gen: 12, types: { 'AI全屋': 2, '全屋空气': 10, '智控设计': 0 }, views: 4 },
+      { store: '8800661564', gen: 12, types: { 'AI全屋': 0, '全屋空气': 12, '智控设计': 0 }, views: 30 },
+      { store: '8800432439', gen: 12, types: { 'AI全屋': 12, '全屋空气': 0, '智控设计': 0 }, views: 20 },
+      { store: '8800602619', gen: 12, types: { 'AI全屋': 12, '全屋空气': 0, '智控设计': 0 }, views: 25 },
+      { store: '8800023394', gen: 11, types: { 'AI全屋': 11, '全屋空气': 0, '智控设计': 0 }, views: 24 },
+      { store: '8800577572', gen: 10, types: { 'AI全屋': 10, '全屋空气': 0, '智控设计': 0 }, views: 6 },
+      { store: '8800502518', gen: 10, types: { 'AI全屋': 1, '全屋空气': 9, '智控设计': 0 }, views: 0 }
+    ],
+    top10_view: [
+      { store: 'N/A', views: 192, gen: 230 },
+      { store: '8800277521', views: 95, gen: 7 },
+      { store: '99999999', views: 88, gen: 187 },
+      { store: '8800342106', views: 51, gen: 8 },
+      { store: '8888800000', views: 47, gen: 27 },
+      { store: '8800599804', views: 38, gen: 5 },
+      { store: '8800495243', views: 35, gen: 20 },
+      { store: '8800435525', views: 31, gen: 4 },
+      { store: '8700002616', views: 30, gen: 8 },
+      { store: '8800661564', views: 30, gen: 12 }
+    ],
+    type_stats: {
+      'AI全屋': { gen: 2554, views: 2928, viewed: 947, rate: 37.08, uv: 1218 },
+      '全屋空气': { gen: 915, views: 719, viewed: 206, rate: 22.51, uv: 129 },
+      '智控设计': { gen: 11, views: 32, viewed: 12, rate: 109.09, uv: 1 }
+    }
+  };
+
+  // 门店编码 → 门店名称映射
+  const STORE_NAMES = {
+    '8800277521': '行唐县鸣阳物流有限公司',
+    '8800334552': '行唐县鸣阳物流有限公司',
+    '8800342106': '陕西嘉航智能科技有限公司',
+    '8800435525': '陕西嘉航食联网001号店',
+    '8700002616': '铜川市海诚商贸有限公司',
+    '8800661564': '(洛阳分户)河南超众智能科技有限公司',
+    '8800657978': '海骏洪湖北街家用空调专营店',
+    '8800267934': '广灵县鑫盛海家电经销部',
+    '8800599804': '嘉鱼县燕涛电器有限公司(新盛店)',
+    '8800537937': '佳杭城北万象城卡萨帝旗舰店',
+    '8800365364': '青岛凤宇翔商贸有限公司商空专营店',
+    '8800241923': '邢台北国商城店',
+    '8800620741': '郸邺居卡萨帝旗舰店',
+    '8800486813': '北国电器居然店',
+    '8800495243': '河南和跃电器销售有限公司',
+    '8800614055': '云阳城中城卡萨帝旗舰店',
+    '8800224910': '石家庄瑞冠电器销售有限公司天宁店',
+    '8800616160': '九江承轩商务服务有限公司',
+    '8800429049': '临泉临武晶宫广场三翼鸟城市体验中心',
+    '8800633829': '黄山旭光新能源有限公司',
+    '8800432439': '遂宁市乐上家电有限责任公司开善东路居然之家店',
+    '8800602619': '滕州市汇顺达网络科技有限公司(龙泉路店)',
+    '8800023394': '文山市海尔电器专卖店',
+    '8800577572': '郸邺居海尔旗舰店中华大街店',
+    '8800502518': '四川省同思智电家电有限责任公司小石堰店'
+  };
+
+  const ABNORMAL_STORES = ['N/A', '99999999', '8888800000'];
+  // 门店单元格渲染：编码 + 名称
+  function storeCell(store) {
+    const name = STORE_NAMES[store];
+    if (ABNORMAL_STORES.includes(store)) {
+      return `<span class="code" style="background:#FEE2E2;color:#991B1B;">${store}</span>`;
+    }
+    if (name) {
+      return `<div><span class="code">${store}</span><div style="font-size:12px;color:var(--color-text-sub);margin-top:2px;">${name}</div></div>`;
+    }
+    return `<span class="code">${store}</span>`;
+  }
+  // 图表标签用：名称过长时截断
+  function storeLabel(store) {
+    const name = STORE_NAMES[store];
+    if (!name) return store;
+    return name.length > 14 ? name.slice(0, 14) + '…' : name;
+  }
+
+  // ============ 表格渲染 ============
+  // TOP10 被打开最多
+  const top10Tbody = document.getElementById('top10-table');
+  data.top10.forEach((row, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    top10Tbody.innerHTML += `
+      <tr>
+        <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+        <td><span class="code">${row.pid}</span></td>
+        <td><span class="type-tag ${row.type}">${row.type}</span></td>
+        <td>${storeCell(row.store)}</td>
+        <td style="text-align: right; font-weight: 600; color: var(--color-accent);">${row.cnt}</td>
+      </tr>
+    `;
+  });
+
+  // TOP20 门店
+  const top20Tbody = document.getElementById('top20-table');
+  data.top20.forEach((row, i) => {
+    const t = row.types;
+    const typeStr = `<span class="type-tag AI全屋">AI全屋 ${t['AI全屋']}</span> <span class="type-tag 全屋空气">全屋空气 ${t['全屋空气']}</span> <span class="type-tag 智控设计">智控设计 ${t['智控设计']}</span>`;
+    const ratio = row.gen > 0 ? (row.views / row.gen).toFixed(2) : '0.00';
+    top20Tbody.innerHTML += `
+      <tr>
+        <td><span class="rank-badge">${i+1}</span></td>
+        <td>${storeCell(row.store)}</td>
+        <td><strong>${row.gen}</strong></td>
+        <td>${typeStr}</td>
+        <td style="text-align: right; font-weight: 600;">${row.views}</td>
+        <td style="text-align: right; color: var(--color-text-sub);">${ratio}</td>
+      </tr>
+    `;
+  });
+
+  // TOP10 门店查看次数
+  const top10vTbody = document.getElementById('top10-view-table');
+  data.top10_view.forEach((row, i) => {
+    const ratio = row.gen > 0 ? (row.views / row.gen).toFixed(2) : '0.00';
+    top10vTbody.innerHTML += `
+      <tr>
+        <td><span class="rank-badge">${i+1}</span></td>
+        <td>${storeCell(row.store)}</td>
+        <td><strong style="color: var(--color-accent);">${row.views}</strong></td>
+        <td style="text-align: right;">${row.gen}</td>
+        <td style="text-align: right; color: var(--color-text-sub);">${ratio}</td>
+      </tr>
+    `;
+  });
+
+  // 类型卡片
+  const typeCardsContainer = document.getElementById('type-cards');
+  const typeColors = { 'AI全屋': '#3B82F6', '全屋空气': '#10B981', '智控设计': '#F59E0B' };
+  Object.keys(data.type_stats).forEach(t => {
+    const s = data.type_stats[t];
+    typeCardsContainer.innerHTML += `
+      <div class="type-card" style="border-top: 4px solid ${typeColors[t]};">
+        <div class="type-card-header">
+          <div class="type-card-name">${t}</div>
+          <span class="type-tag ${t}" style="font-size: 13px; padding: 4px 10px;">类型标签</span>
+        </div>
+        <div class="type-card-grid">
+          <div class="metric">
+            <span class="metric-label">生成提案数</span>
+            <span class="metric-value" style="color: ${typeColors[t]};">${s.gen.toLocaleString()}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">查看次数（PV）</span>
+            <span class="metric-value">${s.views.toLocaleString()}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">被查看提案数</span>
+            <span class="metric-value">${s.viewed.toLocaleString()}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">查看率</span>
+            <span class="metric-value">${s.rate.toFixed(2)}%</span>
+          </div>
+          <div class="metric" style="grid-column: span 2; border-top: 1px dashed var(--color-border); padding-top: 10px; margin-top: 4px;">
+            <span class="metric-label">查看 UV（独立用户数）</span>
+            <span class="metric-value" style="font-size: 18px;">${s.uv.toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  // ============ 图表 ============
+  Chart.defaults.font.family = '-apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+  Chart.defaults.color = '#1F2937';
+
+  // 类型占比饼图
+  const typeCtx = document.getElementById('typePieChart').getContext('2d');
+  new Chart(typeCtx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(data.type_dist),
+      datasets: [{
+        data: Object.values(data.type_dist),
+        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 12, font: { size: 13 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+              const pct = (ctx.parsed / total * 100).toFixed(2);
+              return `${ctx.label}: ${ctx.parsed} 个 (${pct}%)`;
+            }
+          }
+        }
+      },
+      cutout: '55%'
+    }
+  });
+
+  // TOP10门店柱状图
+  const storeCtx = document.getElementById('storeBarChart').getContext('2d');
+  const top10Stores = data.top20.slice(0, 10);
+  new Chart(storeCtx, {
+    type: 'bar',
+    data: {
+      labels: top10Stores.map(s => storeLabel(s.store)),
+      datasets: [{
+        label: '生成提案数',
+        data: top10Stores.map(s => s.gen),
+        backgroundColor: top10Stores.map(s => ABNORMAL_STORES.includes(s.store) ? '#EF4444' : '#005AA0'),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => {
+              const s = top10Stores[items[0].dataIndex];
+              return STORE_NAMES[s.store] ? `${STORE_NAMES[s.store]}（${s.store}）` : s.store;
+            },
+            afterLabel: (ctx) => {
+              const store = top10Stores[ctx.dataIndex];
+              const t = store.types;
+              return `AI全屋:${t['AI全屋']} 全屋空气:${t['全屋空气']} 智控设计:${t['智控设计']}\n查看次数:${store.views}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#E5E7EB' } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+</script>
+</body>
+</html>
